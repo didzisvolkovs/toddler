@@ -241,6 +241,9 @@ class ControllerProductProduct extends Controller {
 			$data['reward'] = $product_info['reward'];
 			$data['points'] = $product_info['points'];
 			$data['description'] = html_entity_decode($product_info['description'], ENT_QUOTES, 'UTF-8');
+			$data['length'] = $product_info['length'];
+			$data['height'] = $product_info['height'];
+			$data['width'] = $product_info['width'];
 
 			if ($product_info['quantity'] <= 0) {
 				$data['stock'] = $product_info['stock_status'];
@@ -438,7 +441,7 @@ class ControllerProductProduct extends Controller {
 			$data['recurrings'] = $this->model_catalog_product->getProfiles($this->request->get['product_id']);
 
 			$this->model_catalog_product->updateViewed($this->request->get['product_id']);
-			
+
 			$data['column_left'] = $this->load->controller('common/column_left');
 			$data['column_right'] = $this->load->controller('common/column_right');
 			$data['content_top'] = $this->load->controller('common/content_top');
@@ -622,7 +625,7 @@ class ControllerProductProduct extends Controller {
 		}
 
 		$product_info = $this->model_catalog_product->getProduct($product_id);
-		
+
 		$recurring_info = $this->model_catalog_product->getProfile($product_id, $recurring_id);
 
 		$json = array();
