@@ -1,0 +1,1251 @@
+<modification>
+	<id>Prices By Customer Groups</id>
+	<version>1.0.2 - oc3011-3020</version>
+	<vqmver>2.1.6</vqmver>
+	<author>OC-addons - oc-addons.com</author>
+
+	<!--admin-->
+
+	<file name="admin/controller/catalog/product.php">
+        <operation>
+			<search position="after"><![CDATA[
+		 		class ControllerCatalogProduct extends Controller {
+			]]></search>
+			<add trim="false"><![CDATA[
+				public function installpbcp() {
+                    $this->db->query("CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "product_to_customer_group_prices` (
+       	            `product_id` int(11) NOT NULL,
+  		            `customer_group_id` int(11) NOT NULL,
+                    `price` decimal(15,4) NOT NULL,
+  		            PRIMARY KEY (`product_id`,`customer_group_id`)
+                    ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;");
+                }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="after"><![CDATA[
+		 		public function index() {
+			]]></search>
+			<add trim="false"><![CDATA[
+				$this->installpbcp();
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="before"><![CDATA[
+		 		 if (isset($this->request->post['price'])) {
+			]]></search>
+			<add><![CDATA[
+				$this->load->model('customer/customer_group');
+
+		        $data['customer_groups'] = $this->model_customer_customer_group->getCustomerGroups();
+
+
+		        if (isset($this->request->post['product_customer_group_price'])) {
+					$product_customer_group_prices = $this->request->post['product_customer_group_price'];
+				} elseif (isset($this->request->get['product_id'])) {
+					$product_customer_group_prices = $this->model_catalog_product->getProductCustomerGroupPrices($this->request->get['product_id']);
+				} else {
+					$product_customer_group_prices = array();
+				}
+
+				$data['product_customer_group_prices'] = array();
+
+				foreach ($product_customer_group_prices as $product_customer_group_price) {
+					$data['product_customer_group_prices'][] = array(
+					'customer_group_id' => $product_customer_group_price['customer_group_id'],
+					'price'             => $product_customer_group_price['price'],
+                    'group_name'        => $product_customer_group_price['name']
+					);
+				}
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="before"><![CDATA[
+		 		 $data['products'][] = array(
+			]]></search>
+			<add><![CDATA[
+				if ($this->config->get('config_update_product_customer_group_prices_in_product_list') == 1){
+                    $this->model_catalog_product->updateAllProductsToCustomerGroupDefaultPrice();
+                    }
+                $this->load->model('customer/customer_group');
+                $data['customer_groups'] = $this->model_customer_customer_group->getCustomerGroups();
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="after"><![CDATA[
+		 		 protected function getList() {
+			]]></search>
+			<add><![CDATA[
+                $this->load->model('setting/setting');
+				if (isset($this->request->post['config_show_admin_product_customer_group_prices_in_product_list'])) {
+			         $data['config_show_admin_product_customer_group_prices_in_product_list'] = $this->request->post['config_show_admin_product_customer_group_prices_in_product_list'];
+		         } else {
+			         $data['config_show_admin_product_customer_group_prices_in_product_list'] = $this->config->get('config_show_admin_product_customer_group_prices_in_product_list');
+		         }
+
+                 if (isset($this->request->post['config_update_product_customer_group_prices_in_product_list'])) {
+			         $data['config_update_product_customer_group_prices_in_product_list'] = $this->request->post['config_update_product_customer_group_prices_in_product_list'];
+		         } else {
+			         $data['config_update_product_customer_group_prices_in_product_list'] = $this->config->get('config_update_product_customer_group_prices_in_product_list');
+		         }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="after"><![CDATA[
+		 		 'price'      => $this->currency->format($result['price'], $this->config->get('config_currency')),
+			]]></search>
+			<add><![CDATA[
+                'product_customer_group_prices' =>$this->model_catalog_product->getProductCustomerGroupPrices($result['product_id']),
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="before"><![CDATA[
+		 		 protected function getList() {
+			]]></search>
+			<add><![CDATA[
+                 public function saveCustomerGroupPrices() {
+                  $out = array();
+                    $this->language->load('catalog/product');
+                    foreach ($this->request->get['product_customer_group_price'] as $group_price_id => $value) {
+                    if ((!is_numeric($value)) || empty($value) || (utf8_strlen($value) > 12)) {
+                        $out['error'][$group_price_id] = $this->language->get('error_group_price');
+                    }
+                  }
+
+                  if (!isset($out['error'])) {
+                               $this->load->model('catalog/product');
+                               $out['value'] = $this->model_catalog_product->saveCustomerGroupPrices($this->request->get['product_id'], $this->request->get['product_customer_group_price']);
+                  }
+                  $this->response->setOutput(json_encode($out));
+               }
+			]]></add>
+		</operation>
+
+	</file>
+
+    <file name="admin/model/catalog/product.php">
+		<operation>
+			<search position="before" index="1"><![CDATA[
+		 		 if (isset($data['product_discount'])) {
+			]]></search>
+			<add><![CDATA[
+				if (isset($data['product_customer_group_price'])) {
+					foreach ($data['product_customer_group_price'] as $product_customer_group_price) {
+						$this->db->query("INSERT INTO " . DB_PREFIX . "product_to_customer_group_prices SET product_id = '" . (int)$product_id . "', customer_group_id = '" . (int)$product_customer_group_price['customer_group_id'] . "',  price = '" . (float)$product_customer_group_price['price'] . "'");
+					}
+				}
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="before" index="1"><![CDATA[
+		 		 $this->db->query("DELETE FROM " . DB_PREFIX . "product_discount WHERE product_id = '" . (int)$product_id . "'");
+			]]></search>
+			<add><![CDATA[
+				$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_customer_group_prices WHERE product_id = '" . (int)$product_id . "'");
+
+                if (isset($data['product_customer_group_price'])) {
+			     foreach ($data['product_customer_group_price'] as $customer_group_id) {
+				    $this->db->query("INSERT INTO " . DB_PREFIX . "product_to_customer_group_prices SET product_id = '" . (int)$product_id . "', customer_group_id = '" . (int)$customer_group_id['customer_group_id'] . "', price = '" . (float)$customer_group_id['price'] . "'");
+			     }
+		        }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="before" index="2"><![CDATA[
+		 		$this->db->query("DELETE FROM " . DB_PREFIX . "product_discount WHERE product_id = '" . (int)$product_id . "'");
+			]]></search>
+			<add><![CDATA[
+				$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_customer_group_prices WHERE product_id = '" . (int)$product_id . "'");
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="before"><![CDATA[
+		 		 $data['product_store'] = $this->getProductStores($product_id);
+			]]></search>
+			<add><![CDATA[
+				$data['product_customer_group_prices'] = $this->model_catalog_product->getProductCustomerGroupPrices($product_id);
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="before"><![CDATA[
+		 		 public function getProductStores($product_id) {
+			]]></search>
+			<add><![CDATA[
+				public function getProductCustomerGroupPrices($product_id) {
+
+                    $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_customer_group_prices pcgp JOIN " . DB_PREFIX . "customer_group_description cgd ON (pcgp.customer_group_id = cgd.customer_group_id) WHERE pcgp.product_id = '" . (int)$product_id . "' AND cgd.language_id = '" . (int)$this->config->get('config_language_id') . "' ORDER BY  price");
+
+					return $query->rows;
+				}
+
+                public function updateAllProductsToCustomerGroupDefaultPrice() {
+                    $this->db->query("DELETE FROM " . DB_PREFIX . "product_to_customer_group_prices");
+
+                    $products = $this->db->query("SELECT * FROM " . DB_PREFIX . "product");
+                    $customer_group_prices = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_customer_group_prices");
+
+                    $this->load->model('customer/customer_group');
+                    $customer_groups = $this->model_customer_customer_group->getCustomerGroups();
+
+                    if ($customer_group_prices->num_rows == 0) {
+		              foreach ($products->rows as $result) {
+                        foreach($customer_groups as $customer_group){
+                            $this->db->query("INSERT INTO " . DB_PREFIX . "product_to_customer_group_prices SET product_id = '" . (int)$result['product_id'] . "', customer_group_id = '" . (int)$customer_group['customer_group_id'] . "' , price = '" . (float)$result['price'] . "'");
+                        }
+		              }
+                    }
+	           }
+
+                public function saveCustomerGroupPrices($product_id, $product_customer_group_price) {
+                    $this->db->query("DELETE FROM " . DB_PREFIX . "product_to_customer_group_prices WHERE product_id = '" . (int)$product_id . "'");
+
+		            foreach ($product_customer_group_price as $customer_group_id => $value) {
+
+                  $this->db->query("INSERT " . DB_PREFIX . "product_to_customer_group_prices SET product_id = '" . (int)$product_id . "', price = '" . $this->db->escape($value) ."', customer_group_id = '" . (int)$customer_group_id . "'");
+
+		            }
+                  return $this->getProductCustomerGroupPrices($product_id);
+                }
+
+			]]></add>
+		</operation>
+
+
+	</file>
+
+    <file name="admin/model/customer/customer_group.php">
+		<operation>
+			<search position="after"><![CDATA[
+		 		 $this->db->query("DELETE FROM " . DB_PREFIX . "customer_group WHERE customer_group_id = '" . (int)$customer_group_id . "'");
+			]]></search>
+			<add><![CDATA[
+				 $this->db->query("DELETE FROM " . DB_PREFIX . "product_to_customer_group_prices WHERE customer_group_id = '" . (int)$customer_group_id . "'");
+			]]></add>
+		</operation>
+	</file>
+
+    <file name="admin/language/en-gb/catalog/product.php">
+		<operation>
+			<search position="after"><![CDATA[
+		 		 <?php
+			]]></search>
+			<add><![CDATA[
+				$_['text_customer_group_prices']               = 'Customer Groups Prices';
+                $_['text_customer_group_name']                 = 'Customer Group: ';
+                $_['help_customer_group_prices']               = 'Product prices for each Customer Group ';
+                $_['column_customer_group_prices']             = 'Customer Group Prices';
+                $_['text_close']                         	   = 'Close';
+                $_['text_save']                         	   = 'Save';
+                $_['error_group_price']                        = 'Incorrect value entered!';
+			]]></add>
+		</operation>
+	</file>
+
+    <file name="admin/view/template/catalog/product_form.twig">
+		<operation>
+			<search position="after" offset="2"><![CDATA[
+		 		 <input type="text" name="price" value="{{ price }}" placeholder="{{ entry_price }}" id="input-price" class="form-control"/>
+			]]></search>
+			<add><![CDATA[
+            {% set existing_groups = [] %}
+              <div class="form-group">
+              <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_customer_group_prices }}">{{ text_customer_group_prices }}</span></label>
+               <div class="col-sm-10" style="border-left:4px double #cccccc;">
+                <div id="product_customer_group_price" class="">
+                    {% set product_customer_group_price_row = 0 %}
+                    {% for customer_group in customer_groups %}
+                    <div id="product_customer_group_price-row{{ product_customer_group_price_row }}">
+
+                      <div class="text-left">
+                      <input type="hidden" name="product_customer_group_price[{{ product_customer_group_price_row }}][customer_group_id]" class="form-control">
+                      <label>{{ text_customer_group_name~customer_group.name }}</label>
+                      </div>
+                      <td class="text-right">
+                      {% if product_customer_group_prices %}
+                        {% for product_customer_group_price in product_customer_group_prices %}
+                            {% if customer_group.customer_group_id == product_customer_group_price.customer_group_id %}
+                                <input type="text" name="product_customer_group_price[{{ product_customer_group_price_row }}][price]" value="{{ product_customer_group_price.price }}" placeholder="{{ entry_price }}" class="form-control" />
+                                <input type="hidden" name="product_customer_group_price[{{ product_customer_group_price_row }}][customer_group_id]" value="{{ customer_group.customer_group_id }}" class="form-control" />
+                        {% set existing_groups = existing_groups|merge([customer_group.customer_group_id]) %}
+                        {% endif %}
+                        {% endfor %}
+                      {% endif %}
+                      {% if customer_group.customer_group_id not in existing_groups %}
+                      <input type="text" name="product_customer_group_price[{{ product_customer_group_price_row }}][price]" value="0.00" placeholder="{{ entry_price }}" class="form-control" class="form-control" />
+                      <input type="hidden" name="product_customer_group_price[{{ product_customer_group_price_row }}][customer_group_id]" value="{{ customer_group.customer_group_id }}" class="form-control" />
+                      {% endif %}
+                      </td>
+                    </div>
+                   <br />
+                    {% set product_customer_group_price_row = product_customer_group_price_row + 1 %}
+                    {% endfor %}
+                </div>
+              </div>
+              </div>
+			]]></add>
+		</operation>
+	</file>
+
+
+     <file name="admin/view/template/catalog/product_list.twig">
+		<operation>
+			<search position="before"><![CDATA[
+		 		 <td class="text-right">{{ column_action }}</td>
+			]]></search>
+			<add><![CDATA[
+                 {% if config_show_admin_product_customer_group_prices_in_product_list == 1 %}
+				 <td class="text-right">{{ column_customer_group_prices }}</td>
+                 {% endif %}
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="iafter"><![CDATA[
+		 		 {{ header }}
+			]]></search>
+			<add><![CDATA[
+               <style>
+                .inline-edit-price {
+                    display:none;
+                    margin-right: 0px;
+                    margin-left: 0px;
+                    clear:both;
+                }
+                .inline-edit-price input {
+                    max-width:90%;
+                    cursor: text;
+                    border:1px solid #ccc;
+                }
+
+                 .inline-edit-price input.customer-group-price
+                {
+                    text-align: left;
+                }
+
+
+                td > span,/*.inline-edit-price +span,*/  span {
+                    cursor: pointer;
+                }
+
+                td > span,/*.inline-edit-price +span,*/ .groupPlusPrice span{
+                    cursor: pointer;
+                }
+
+
+                </style>
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="before"><![CDATA[
+                <td class="text-right"><a href="{{ product.edit }}" data-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary"><i class="fa fa-pencil"></i></a></td>
+			]]></search>
+			<add><![CDATA[
+                {% if config_show_admin_product_customer_group_prices_in_product_list == 1 %}
+                {% set existing_cg = [] %}
+                <td class="left">
+                    <div class="inline-edit-price"  style="display:none;" id="customer-group-price-{{ product.product_id }}" value="{{ product.product_id }}">
+                <div style="width:100px;overflow-y:auto;overflow-x:hidden;">
+                        {% for customer_group in customer_groups %}
+                        {% for group_price in product.product_customer_group_prices %}
+                        {% if group_price.customer_group_id == customer_group.customer_group_id %}
+                        <span style="font-weight:bold">{{ customer_group.name }}</span>
+                         <input type="text" class="customer-group-price" style="cursor:pointer;width:100px;" nowrap="nowrap"
+                            name="product_customer_group_price[{{ customer_group.customer_group_id }}]" size="100"
+                            value="{{ group_price.price ? group_price.price : '' }}" />
+                            {% set existing_cg = existing_cg|merge([customer_group.customer_group_id]) %}<br /><br />
+                            <span class="error" style="color:#ff0000;" id="customer-group-price-error-{{ customer_group.customer_group_id }}"></span>
+                     {% endif %}
+                     {% endfor %}
+                     {% if customer_group.customer_group_id not in existing_cg %}
+                     <span style="font-weight:bold">{{ customer_group.name }}</span>
+                         <input type="text" class="customer-group-price" style="cursor:pointer;width:100px;" nowrap="nowrap"
+                            name="product_customer_group_price[{{ customer_group.customer_group_id }}]" size="100"
+                            value="{{ group_price.price ? "0.0000" : '' }}" /><br /><br />
+                     {% endif %}
+                     {% endfor %}
+
+                    <div style="text-align:center;width:100%; background:#1e91cf;padding:5px;cursor:pointer;margin:2px 0px;">
+                            <a style="color:#fff;" onclick="save_customer_group_prices(this,{{ product.product_id }})">{{ text_save }}</a>
+                        </div>
+                      <div class="close-input" style="text-align:center;width:100%; background:#1e91cf;padding:5px;cursor:pointer;">
+                            <a style="color:#fff;">{{ text_close }}</a>
+                        </div>
+                   </div>
+                </div>
+                {% set test = [] %}
+                {% for customer_group in customer_groups %}
+                   <div class="groupPlusPrice">
+                      <span id="groupPlusPrice-{{ customer_group.customer_group_id }}">
+                    {% for group_price in product.product_customer_group_prices %}
+                    {% if group_price.customer_group_id == customer_group.customer_group_id %}
+                    {% set test = test|merge([customer_group.customer_group_id]) %}
+                    <span style="font-weight:bold">{{ customer_group.name }}</span>{{ customer_group.customer_group_id ? group_price.price : '' }}
+                {% endif %}
+                     {% endfor %}
+                    {% if test in customer_group.customer_group_id %}
+                    <span style="font-weight:bold">{{ customer_group.name }}</span>{{ customer_group.customer_group_id ? "0.0000" : '' }}
+		              </span>
+                {% endif %}
+
+                   </div>
+                {% endfor %}
+                </td>
+                {% endif %}
+
+
+
+
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="before" index="1"><![CDATA[
+		 		 <script type="text/javascript"><!--
+			]]></search>
+			<add><![CDATA[
+               <script type="text/javascript"><!--
+                    $(document).ready(function() {
+                        $('.inline-edit-price').each(function(index, wrapper) {
+                            $(this).siblings().click(function() {
+                                $(wrapper).show();
+                            })
+                        });
+                        $('div.close-input').click(function() {
+                            $(this).closest('.inline-edit-price').hide();
+                        });
+
+                    });
+
+                      function save_customer_group_prices(btn,id) {
+                      var input_product_customer_group_price = $('product_customer_group_price-'+id+' input');
+                      var customer_group_price = $(input_product_customer_group_price).val();
+                      $(customer_group_price).css('cursor','progress');
+                      $.ajax({
+                         url: 'index.php?route=catalog/product/saveCustomerGroupPrices&product_id='+id+'&user_token={{ user_token }}',
+                         type: 'GET',
+                         dataType: 'json',
+                         data: $('#customer-group-price-'+id+' input').serialize(),
+                         success: function(data) {
+                            $('#customer-group-price-'+id + ' span.error').html('');
+                            if(data['error']) {
+                               for(var customer_group_id in data['error']) {
+                                  $('#customer-group-price-'+id).find('#customer-group-price-error-'+customer_group_id).html(data['error'][customer_group_id]);
+                               }
+                            }
+                            else {
+                               for(var customer_group_id in data['value']) {
+                               var priceTmp = parseFloat(data['value'][customer_group_id]['price']);
+                               var price = priceTmp.toFixed(4);
+
+                                  $('#customer-group-price-'+id).siblings('div.groupPlusPrice').find('#groupPlusPrice-'+data['value'][customer_group_id]['customer_group_id']).html("<span style=\"font-weight:bold\">" +data['value'][customer_group_id]['name']+ ": </span>" + price);
+                               }
+                               $(btn).closest('.inline-edit-price').hide();
+                            }
+                         }
+                      });
+                      $(input_product_customer_group_price).css('cursor','default');
+
+                   }
+                //--></script>
+			]]></add>
+		</operation>
+	</file>
+
+
+    <!-- Settings -->
+
+    <file name="admin/controller/setting/setting.php">
+		<operation>
+			<search position="before"><![CDATA[
+		 		 if (isset($this->request->post['config_stock_checkout'])) {
+			]]></search>
+			<add><![CDATA[
+		 		 if (isset($this->request->post['config_show_admin_product_customer_group_prices_in_product_list'])) {
+			         $data['config_show_admin_product_customer_group_prices_in_product_list'] = $this->request->post['config_show_admin_product_customer_group_prices_in_product_list'];
+		         } else {
+			         $data['config_show_admin_product_customer_group_prices_in_product_list'] = $this->config->get('config_show_admin_product_customer_group_prices_in_product_list');
+		         }
+
+                 if (isset($this->request->post['config_enable_admin_product_customer_group_prices'])) {
+			         $data['config_enable_admin_product_customer_group_prices'] = $this->request->post['config_enable_admin_product_customer_group_prices'];
+		         } else {
+			         $data['config_enable_admin_product_customer_group_prices'] = $this->config->get('config_enable_admin_product_customer_group_prices');
+		         }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="after"><![CDATA[
+		 		$data['customer_groups'] = $this->model_customer_customer_group->getCustomerGroups();
+			]]></search>
+			<add><![CDATA[
+                 if (isset($this->request->post['config_update_product_customer_group_prices_in_product_list'])) {
+			         $data['config_update_product_customer_group_prices_in_product_list'] = $this->request->post['config_update_product_customer_group_prices_in_product_list'];
+		         } else {
+			         $data['config_update_product_customer_group_prices_in_product_list'] = $this->config->get('config_update_product_customer_group_prices_in_product_list');
+		         }
+			]]></add>
+		</operation>
+	</file>
+
+    <file name="admin/view/template/setting/setting.twig">
+		<operation>
+			<search position="after"><![CDATA[
+		 		 <div class="tab-pane" id="tab-option">
+		 		 			]]></search>
+			<add><![CDATA[
+
+			<fieldset>
+			<legend>{{ text_products_by_customer_group_prices }}</legend>
+                <div class="form-group">
+                  <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_enable_admin_product_customer_group_prices }}">{{ entry_enable_admin_product_customer_group_prices }}</span></label>
+                  <div class="col-sm-10">
+                    <label class="radio-inline">
+                      {% if config_enable_admin_product_customer_group_prices == 1 %}
+                      <input type="radio" name="config_enable_admin_product_customer_group_prices" value="1" checked="checked" />
+                      {{ text_yes }}
+                      {% else %}
+                      <input type="radio" name="config_enable_admin_product_customer_group_prices" value="1" />
+                      {{ text_yes }}
+                      {% endif %}
+                    </label>
+                    <label class="radio-inline">
+                      {% if config_enable_admin_product_customer_group_prices == 0 %}
+                      <input type="radio" name="config_enable_admin_product_customer_group_prices" value="0" checked="checked" />
+                      {{ text_no }}
+                      {% else %}
+                      <input type="radio" name="config_enable_admin_product_customer_group_prices" value="0" />
+                      {{ text_no }}
+                      {% endif %}
+                    </label>
+                  </div>
+                </div>
+				<div class="form-group">
+                  <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ entry_show_admin_product_customer_group_prices_in_product_list }}">{{ entry_show_admin_product_customer_group_prices_in_product_list }}</span></label>
+                  <div class="col-sm-10">
+                    <label class="radio-inline">
+                      {% if config_show_admin_product_customer_group_prices_in_product_list == 1 %}
+                      <input type="radio" name="config_show_admin_product_customer_group_prices_in_product_list" value="1" checked="checked" />
+                      {{ text_yes }}
+                      {% else %}
+                      <input type="radio" name="config_show_admin_product_customer_group_prices_in_product_list" value="1" />
+                      {{ text_yes }}
+                      {% endif %}
+                    </label>
+                    <label class="radio-inline">
+                      {% if config_show_admin_product_customer_group_prices_in_product_list == 0 %}
+                      <input type="radio" name="config_show_admin_product_customer_group_prices_in_product_list" value="0" checked="checked" />
+                      {{ text_no }}
+                      {% else %}
+                      <input type="radio" name="config_show_admin_product_customer_group_prices_in_product_list" value="0" />
+                      {{ text_no }}
+                      {% endif %}
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_update_product_customer_group_prices_in_product_list }}">{{ entry_update_product_customer_group_prices_in_product_list }}</span></label>
+                  <div class="col-sm-10">
+                    <label class="radio-inline">
+                      {% if config_update_product_customer_group_prices_in_product_list == 1 %}
+                      <input type="radio" name="config_update_product_customer_group_prices_in_product_list" value="1" checked="checked" />
+                      {{ text_yes }}
+                      {% else %}
+                      <input type="radio" name="config_update_product_customer_group_prices_in_product_list" value="1" />
+                      {{ text_yes }}
+                      {% endif %}
+                    </label>
+                    <label class="radio-inline">
+                      {% if config_update_product_customer_group_prices_in_product_list == 0 %}
+                      <input type="radio" name="config_update_product_customer_group_prices_in_product_list" value="0" checked="checked" />
+                      {{ text_no }}
+                      {% else %}
+                      <input type="radio" name="config_update_product_customer_group_prices_in_product_list" value="0" />
+                      {{ text_no }}
+                      {% endif %}
+                    </label>
+                  </div>
+                </div>
+				</fieldset>
+			]]></add>
+		</operation>
+	</file>
+
+    <file name="admin/language/en-gb/setting/setting.php">
+		<operation>
+		    <search position="after"><![CDATA[
+		    	<?php
+		    ]]></search>
+		    <add><![CDATA[
+		   		$_['entry_show_admin_product_customer_group_prices_in_product_list']        = 'Show customer group prices in Admin product list.';
+                $_['text_products_by_customer_group_prices']                                = 'Product Prices by Customer Groups.';
+                $_['entry_update_product_customer_group_prices_in_product_list']            = 'Update all product prices';
+                $_['entry_enable_admin_product_customer_group_prices']                      = 'Enable this extension?';
+                $_['help_update_product_customer_group_prices_in_product_list']             = 'Set this to yes and all Customer Group Prices will be updated/changed with the default price. You have to use this option only after the first installation to set the Customer Group Prices or whenever you want to reset all the prices. After setting this to Yes and visited the Product list, be sure to turn this option to No afterwards.';
+                $_['help_enable_admin_product_customer_group_prices']                       = 'By enableing this extension the frontend of the shop will use the Customer Group Prices for the products';
+		    ]]></add>
+		</operation>
+	</file>
+
+    <file name="admin/controller/setting/setting.php">
+		<operation>
+			<search position="before"><![CDATA[
+		 		 if (isset($this->request->post['config_stock_checkout'])) {
+			]]></search>
+			<add><![CDATA[
+		 		 if (isset($this->request->post['config_show_admin_product_customer_group_prices_in_product_list'])) {
+			         $data['config_show_admin_product_customer_group_prices_in_product_list'] = $this->request->post['config_show_admin_product_customer_group_prices_in_product_list'];
+		         } else {
+			         $data['config_show_admin_product_customer_group_prices_in_product_list'] = $this->config->get('config_show_admin_product_customer_group_prices_in_product_list');
+		         }
+			]]></add>
+		</operation>
+    </file>
+
+    <!-- End Setting -->
+
+
+    <!-- Catalog -->
+    <!--    Categories-->
+    <file name="catalog/controller/product/category.php">
+		<operation>
+			<search position="before" index="2"><![CDATA[
+		 		 if ($category_info) {
+			]]></search>
+			<add><![CDATA[
+		 		 if (isset($this->request->post['config_enable_admin_product_customer_group_prices'])) {
+			         $data['config_enable_admin_product_customer_group_prices'] = $this->request->post['config_enable_admin_product_customer_group_prices'];
+		          } elseif ($this->config->get('config_enable_admin_product_customer_group_prices')){
+			         $data['config_enable_admin_product_customer_group_prices'] = $this->config->get('config_enable_admin_product_customer_group_prices');
+		          }else{
+			         $data['config_enable_admin_product_customer_group_prices'] = '0';
+		          }
+
+                  if (!$this->customer->getGroupId()){
+                    $data['usergroupid'] = $this->config->get('config_customer_group_id');
+                  } else {
+                    $data['usergroupid'] = $this->customer->getGroupId();
+                  }
+			]]></add>
+		</operation>
+    </file>
+
+
+    <file name="catalog/controller/product/category.php">
+        <operation>
+			<search position="before"><![CDATA[
+		 		if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			    $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($result['product_id'], $cgid);
+                }
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+		 		$price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+                 if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $price = $this->currency->format($this->tax->calculate($result['cgprice'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+                 } else {
+                    $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']   );
+                 }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+                    $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+		 		 if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['cgprice'], $this->session->data['currency']);
+                 } else {
+                    $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+                 }
+
+			]]></add>
+		</operation>
+    </file>
+<!--    categories-->
+
+    <file name="catalog/controller/product/product.php">
+		<operation>
+			<search position="before"><![CDATA[
+		 		 if ($product_info['quantity'] <= 0) {
+			]]></search>
+			<add><![CDATA[
+		 		 if (isset($this->request->post['config_enable_admin_product_customer_group_prices'])) {
+			         $data['config_enable_admin_product_customer_group_prices'] = $this->request->post['config_enable_admin_product_customer_group_prices'];
+		          } elseif ($this->config->get('config_enable_admin_product_customer_group_prices')){
+			         $data['config_enable_admin_product_customer_group_prices'] = $this->config->get('config_enable_admin_product_customer_group_prices');
+		          }else{
+			         $data['config_enable_admin_product_customer_group_prices'] = '0';
+		          }
+
+                  if (!$this->customer->getGroupId()){
+                    $data['usergroupid'] = $this->config->get('config_customer_group_id');
+                  } else {
+                    $data['usergroupid'] = $this->customer->getGroupId();
+                  }
+			]]></add>
+		</operation>
+    </file>
+
+
+    <file name="catalog/controller/product/product.php">
+        <operation>
+			<search position="before" index="1"><![CDATA[
+		 		if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                 if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			    $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($product_info['product_id'], $cgid);
+                 }
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+		 		$data['price'] = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+                 if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $data['price'] = $this->currency->format($this->tax->calculate($product_info['cgprice'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+                 } else {
+                    $data['price'] = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+                 }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+		 		$price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+                 if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $price = $this->currency->format($this->tax->calculate($cgprice['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+                 } else {
+                    $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+                 }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+		 		 $data['tax'] = $this->currency->format((float)$product_info['special'] ? $product_info['special'] : $product_info['price'], $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+		 		 if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $data['tax'] = $this->currency->format((float)$product_info['special'] ? $product_info['special'] : $product_info['cgprice'], $this->session->data['currency']);
+                 } else {
+                    $data['tax'] = $this->currency->format((float)$product_info['special'] ? $product_info['special'] : $product_info['price'], $this->session->data['currency']);
+                 }
+
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+                 $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+		 		 if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['cgprice'], $this->session->data['currency']);
+                 } else {
+                    $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+                 }
+
+			]]></add>
+		</operation>
+    </file>
+
+    <file name="catalog/model/catalog/product.php">
+		<operation>
+			<search position="before"><![CDATA[
+		 		 public function getProducts($data = array()) {
+			]]></search>
+			<add><![CDATA[
+		 		public function getProductCustomerGroupPrice($product_id, $usergroupid) {
+					$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_customer_group_prices WHERE product_id = '" . (int)$product_id . "' AND customer_group_id = '" . (int)$usergroupid . "' ORDER BY  price");
+
+					return $query->row;
+				}
+			]]></add>
+		</operation>
+
+       <operation>
+			<search position="iafter"><![CDATA[
+		 		 AS discount,
+			]]></search>
+			<add><![CDATA[
+		 		(SELECT price FROM " . DB_PREFIX . "product_to_customer_group_prices ptcgp WHERE ptcgp.product_id = p.product_id AND ptcgp.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "') AS cgprice,
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="before"><![CDATA[
+		 		 'viewed'           => $query->row['viewed']
+			]]></search>
+			<add><![CDATA[
+		 		'cgprice'           => $query->row['cgprice'],
+			]]></add>
+		</operation>
+    </file>
+
+    <file name="catalog/controller/checkout/cart.php">
+        <operation>
+			<search position="before"><![CDATA[
+                 foreach ($product['option'] as $option) {
+			]]></search>
+			<add><![CDATA[
+			    $total_option_price_temp = '0';
+                $total_option_price = '0';
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="after"><![CDATA[
+                 $value = $option['value'];
+			]]></search>
+			<add><![CDATA[
+			    $total_option_price_temp = $option['price'];
+                $total_option_price = $total_option_price + $total_option_price_temp;
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="before" index="1"><![CDATA[
+		 		 if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                 if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		 if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			     $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($product['product_id'], $cgid);
+                 $product_special_query = $this->db->query("SELECT price FROM " . DB_PREFIX . "product_special WHERE product_id = '" . (int)$product['product_id'] . "' AND customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND ((date_start = '0000-00-00' OR date_start < NOW()) AND (date_end = '0000-00-00' OR date_end > NOW())) ORDER BY priority ASC, price ASC LIMIT 1");
+				}
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+                 $unit_price = $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax'));
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices') && !$product_special_query->num_rows){
+                    $unit_price = $this->tax->calculate(($cgprice['price'] + $total_option_price), $product['tax_class_id'], $this->config->get('config_tax'));
+				    } else {
+					 $unit_price = $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax'));
+				    }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+                $unit_price = $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax'));
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices') && !$product_special_query->num_rows){
+                    $unit_price = $this->tax->calculate(($cgprice['price'] + $total_option_price), $product['tax_class_id'], $this->config->get('config_tax'));
+				    } else {
+					 $unit_price = $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax'));
+				    }
+			]]></add>
+		</operation>
+
+<!--
+        <operation>
+			<search position="replace"><![CDATA[
+		 		 $total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $total = $this->currency->format($this->tax->calculate($cgprice['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity']);
+				    } else {
+					 $total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity']);
+				    }
+			]]></add>
+		</operation>
+-->
+    </file>
+
+    <!-- End Catalog -->
+
+    <!-- Compare -->
+
+    <file name="catalog/controller/product/compare.php">
+        <operation>
+			<search position="before"><![CDATA[
+		 		 if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			     $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($product_info['product_id'], $cgid);
+				    }
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+		 		 $price = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $price = $this->currency->format($this->tax->calculate($cgprice['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    } else {
+					 $price = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+    </file>
+
+    <!-- End Compare -->
+
+    <!-- Wishlist -->
+
+    <file name="catalog/controller/account/wishlist.php">
+        <operation>
+			<search position="before"><![CDATA[
+		 		 if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			     $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($product_info['product_id'], $cgid);
+				    }
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+		 		 $price = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $price = $this->currency->format($this->tax->calculate($cgprice['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    } else {
+					 $price = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+    </file>
+
+    <!-- End Wishlist -->
+
+    <!-- Search -->
+
+    <file name="catalog/controller/product/search.php">
+        <operation>
+			<search position="before"><![CDATA[
+		 		 if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			     $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($result['product_id'], $cgid);
+				}
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+		 		 $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $price = $this->currency->format($this->tax->calculate($cgprice['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    } else {
+					 $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+		 		 $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $cgprice['price'], $this->session->data['currency']);
+				    } else {
+					 $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+    </file>
+
+    <!-- End Search -->
+
+    <!-- Bestseller -->
+
+    <file name="catalog/controller/extension/module/bestseller.php">
+        <operation>
+			<search position="before"><![CDATA[
+		 		 if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			     $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($result['product_id'], $cgid);
+				    }
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+		 		 $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $price = $this->currency->format($this->tax->calculate($cgprice['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    } else {
+					 $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+		 		 $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $cgprice['price'], $this->session->data['currency']);
+				    } else {
+					 $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+    </file>
+
+    <!-- End Bestseller -->
+
+    <!-- Featured -->
+
+    <file name="catalog/controller/extension/module/featured.php">
+        <operation>
+			<search position="before"><![CDATA[
+		 		 if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                 if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			     $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($product_info['product_id'], $cgid);
+				}
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+		 		 $price = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $price = $this->currency->format($this->tax->calculate($cgprice['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    } else {
+					 $price = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+		 		 $tax = $this->currency->format((float)$product_info['special'] ? $product_info['special'] : $product_info['price'], $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $tax = $this->currency->format((float)$product_info['special'] ? $product_info['special'] : $cgprice['price'], $this->session->data['currency']);
+				    } else {
+					 $tax = $this->currency->format((float)$product_info['special'] ? $product_info['special'] : $product_info['price'], $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+    </file>
+
+    <!-- End Featured -->
+
+    <!-- Latest -->
+
+    <file name="catalog/controller/extension/module/latest.php">
+        <operation>
+			<search position="before"><![CDATA[
+		 		 if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			     $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($result['product_id'], $cgid);
+			     }
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+		 		 $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $price = $this->currency->format($this->tax->calculate($cgprice['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    } else {
+					 $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+		 		 $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $cgprice['price'], $this->session->data['currency']);
+				    } else {
+					 $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+    </file>
+
+    <!-- End Latest -->
+
+    <!-- Special -->
+
+    <file name="catalog/controller/extension/module/special.php">
+        <operation>
+			<search position="before"><![CDATA[
+		 		 if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
+			]]></search>
+			<add><![CDATA[
+                if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+		 		if (!$this->customer->getGroupId()){
+                    $cgid = $this->config->get('config_customer_group_id');
+                  } else {
+                    $cgid = $this->customer->getGroupId();
+                  }
+
+			     $this->load->model('catalog/product');
+			     $cgprice = $this->model_catalog_product->getProductCustomerGroupPrice($result['product_id'], $cgid);
+                }
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[
+		 		 $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $price = $this->currency->format($this->tax->calculate($cgprice['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    } else {
+					 $price = $this->currency->format($this->tax->calculate($result['price'], $result['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+
+        <operation>
+			<search position="replace"><![CDATA[
+		 		 $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+			]]></search>
+			<add><![CDATA[
+			     if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $cgprice['price'], $this->session->data['currency']);
+				    } else {
+					 $tax = $this->currency->format((float)$result['special'] ? $result['special'] : $result['price'], $this->session->data['currency']);
+				    }
+			]]></add>
+		</operation>
+    </file>
+
+    <!-- End Special -->
+
+    <!-- System/Cart -->
+    <file name="system/library/cart/cart.php">
+		<operation>
+			<search position="replace"><![CDATA[
+		 		 $product_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_store p2s LEFT JOIN " . DB_PREFIX . "product p ON (p2s.product_id = p.product_id) LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) WHERE p2s.store_id = '" . (int)$this->config->get('config_store_id') . "' AND p2s.product_id = '" . (int)$cart['product_id'] . "' AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.date_available <= NOW() AND p.status = '1'");
+			]]></search>
+			<add><![CDATA[
+		 		if ($this->config->get('config_enable_admin_product_customer_group_prices')){
+                    $product_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_store p2s LEFT JOIN " . DB_PREFIX . "product p ON (p2s.product_id = p.product_id) LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) LEFT JOIN " . DB_PREFIX . "product_to_customer_group_prices ptcgp ON (p.product_id = ptcgp.product_id) WHERE p2s.store_id = '" . (int)$this->config->get('config_store_id') . "' AND ptcgp.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND p2s.product_id = '" . (int)$cart['product_id'] . "' AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.date_available <= NOW() AND p.status = '1'");
+                } else {
+                    $product_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_store p2s LEFT JOIN " . DB_PREFIX . "product p ON (p2s.product_id = p.product_id) LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) WHERE p2s.store_id = '" . (int)$this->config->get('config_store_id') . "' AND p2s.product_id = '" . (int)$cart['product_id'] . "' AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.date_available <= NOW() AND p.status = '1'");
+                }
+			]]></add>
+		</operation>
+    </file>
+
+    <!-- End System/Cart -->
+
+
+</modification>

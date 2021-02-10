@@ -1,0 +1,594 @@
+<modification>
+	<id>Categories By Customer Groups</id>
+	<version>1.0 oc3011-3020</version>
+	<vqmver>2.1.6</vqmver>
+	<author>OC-addons - oc-addons.com</author>
+	
+	<!--admin-->
+	
+	<file name="admin/controller/catalog/category.php">
+        <operation>
+			<search position="after"><![CDATA[
+		 		class ControllerCatalogCategory extends Controller {
+			]]></search>
+			<add trim="false"><![CDATA[
+				public function installcbcg() {
+                     $this->db->query("CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "category_to_customer_group` (
+       	            `category_id` int(11) NOT NULL,
+  		            `customer_group_id` int(11) NOT NULL,
+  		            PRIMARY KEY (`category_id`,`customer_group_id`)
+                    ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;");
+                }
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="after"><![CDATA[
+		 		public function index() {
+			]]></search>
+			<add trim="false"><![CDATA[
+				$this->installcbcg();
+			]]></add>
+		</operation>
+        
+		<operation>
+			<search position="before"><![CDATA[
+		 		 $this->load->model('setting/store');
+			]]></search>
+			<add><![CDATA[
+				$this->load->model('customer/customer_group');
+                if(isset($_GET['category_id'])){
+                    $data['existing_category'] = $_GET['category_id'];
+                }
+
+		          $data['customer_groups'] = $this->model_customer_customer_group->getCustomerGroups();
+
+		          if (isset($this->request->post['category_customer_group'])) {
+			         $data['category_customer_group'] = $this->request->post['category_customer_group'];
+		          } elseif (isset($this->request->get['category_id'])) {
+			         $data['category_customer_group'] = $this->model_catalog_category->getCategoryCustomerGroups($this->request->get['category_id']);
+		          } else {
+			         $data['category_customer_group'] = array();
+		          }
+
+                  if (isset($this->request->post['config_default_category_customer_groups'])) {
+			         $data['config_default_category_customer_groups'] = $this->request->post['config_default_category_customer_groups'];
+		          } elseif ($this->config->get('config_default_category_customer_groups')) {
+			         $data['config_default_category_customer_groups'] = $this->config->get('config_default_category_customer_groups');
+		          } else {
+			         $data['config_default_category_customer_groups'] = array();
+		          }
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="after"><![CDATA[
+		 		 protected function getList() {
+			]]></search>
+			<add><![CDATA[
+                $this->load->model('setting/setting');
+				if (isset($this->request->post['config_show_admin_category_customer_groups_in_category_list'])) {
+			         $data['config_show_admin_category_customer_groups_in_category_list'] = $this->request->post['config_show_admin_category_customer_groups_in_category_list'];
+		         } else {
+			         $data['config_show_admin_category_customer_groups_in_category_list'] = $this->config->get('config_show_admin_category_customer_groups_in_category_list');			
+		         }
+
+                if (isset($this->request->post['config_default_category_customer_groups'])) {
+			         $data['config_default_category_customer_groups'] = $this->request->post['config_default_category_customer_groups'];
+		         } elseif ($this->config->get('config_default_category_customer_groups')) {
+			         $data['config_default_category_customer_groups'] = $this->config->get('config_default_category_customer_groups');
+		         } else {
+			         $data['config_default_category_customer_groups'] = array();
+		         }
+
+                $data['user_token'] = $this->session->data['user_token'];
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="before"><![CDATA[
+		 		 $data['categories'][] = array(
+			]]></search>
+			<add><![CDATA[
+                if ($this->config->get('config_update_category_customer_groups_in_category_list') == 1){
+                    $this->model_catalog_category->updateAllCategoriesToDefaultCustomerGroups();
+                }
+
+				$this->load->model('customer/customer_group');
+                $data['customer_groups'] = $this->model_customer_customer_group->getCustomerGroups();
+                $the_category_customer_groups = $this->model_catalog_category->getCategoryCustomerGroups($result['category_id']);
+			]]></add>
+        </operation>
+        
+        <operation>
+			<search position="before" index="1"><![CDATA[
+		 		 'category_id' => $result['category_id'],
+			]]></search>
+			<add><![CDATA[
+				'category_customer_groups' => $the_category_customer_groups,
+			]]></add>
+        </operation>
+            
+        <operation>
+			<search position="before"><![CDATA[
+		 		 public function add() {
+			]]></search>
+			<add><![CDATA[
+				public function saveCategoryCustomerGroup() {
+                $category_out = array();
+                if ($this->user->hasPermission('modify', 'catalog/category')) {
+                    $category_id                 = $this->request->get['category_id'];
+                    $category_customer_group_id  = $this->request->get['category_customer_group_id'];
+                    $checked            = $this->request->get['checked'];
+            
+                    $this->load->model('catalog/category');
+                    $category_out['value']       = $this->model_catalog_category->saveCategoryCustomerGroup($category_id,$category_customer_group_id,$checked);
+                    }
+        
+                $this->response->setOutput(json_encode($category_out));
+        
+                }
+			]]></add>
+		</operation>
+	</file>
+    
+    <file name="admin/model/catalog/category.php">
+		<operation>
+			<search position="before" index="1"><![CDATA[
+		 		 if (isset($data['category_store'])) {
+			]]></search>
+			<add><![CDATA[
+				if (isset($data['category_customer_group'])) {
+			     foreach ($data['category_customer_group'] as $category_customer_group_id) {
+				    $this->db->query("INSERT INTO " . DB_PREFIX . "category_to_customer_group SET category_id = '" . (int)$category_id . "', customer_group_id = '" . (int)$category_customer_group_id . "'");
+			         }
+		          }
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="before" index="1"><![CDATA[
+		 		 $this->db->query("DELETE FROM " . DB_PREFIX . "category_to_store WHERE category_id = '" . (int)$category_id . "'");
+			]]></search>
+			<add><![CDATA[
+				$this->db->query("DELETE FROM " . DB_PREFIX . "category_to_customer_group WHERE category_id = '" . (int)$category_id . "'");
+        
+                if (isset($data['category_customer_group'])) {
+			     foreach ($data['category_customer_group'] as $category_customer_group_id) {
+				    $this->db->query("INSERT INTO " . DB_PREFIX . "category_to_customer_group SET category_id = '" . (int)$category_id . "', customer_group_id = '" . (int)$category_customer_group_id . "'");
+			     }
+		        }
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="before" index="2"><![CDATA[
+		 		 $this->db->query("DELETE FROM " . DB_PREFIX . "category_to_store WHERE category_id = '" . (int)$category_id . "'");
+			]]></search>
+			<add><![CDATA[
+				$this->db->query("DELETE FROM " . DB_PREFIX . "category_to_customer_group WHERE category_id = '" . (int)$category_id . "'");
+			]]></add>
+		</operation>
+        
+<!--
+        <operation>
+			<search position="before"><![CDATA[
+		 		 $data['product_store'] = $this->getProductStores($product_id);
+			]]></search>
+			<add><![CDATA[
+				$data['product_customer_group'] = $this->model_catalog_product->getProductCustomerGroups($product_id);
+			]]></add>
+		</operation>
+-->
+        
+        <operation>
+			<search position="before"><![CDATA[
+		 		 public function getCategoryStores($category_id) {
+			]]></search>
+			<add><![CDATA[
+				public function getCategoryCustomerGroups($category_id) {
+		        $category_customer_group_data = array();
+                $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "category_to_customer_group WHERE category_id = '" . (int)$category_id . "'");
+
+                foreach ($query->rows as $result) {
+                    $category_customer_group_data[] = $result['customer_group_id'];
+                    }
+
+                return $category_customer_group_data;
+                }
+
+
+                public function updateAllCategoriesToDefaultCustomerGroups() {
+                $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "category WHERE category_id not in (select category_id FROM " . DB_PREFIX . "category_to_customer_group)" );
+        
+                $default_category_customer_groups = $this->config->get('config_default_category_customer_groups');
+     
+		        foreach ($query->rows as $result) {
+                    foreach($default_category_customer_groups as $category_customer_group){
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "category_to_customer_group SET category_id = '" . (int)$result['category_id'] . "', customer_group_id = '" . (int)$category_customer_group . "'");
+                    }
+		          }
+	           }
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="before" index="1"><![CDATA[
+		 		 public function deleteCategory($category_id) {
+			]]></search>
+			<add><![CDATA[
+				public function saveCategoryCustomerGroup($category_id,$category_customer_group_id,$checked) {
+		            $this->db->query("DELETE FROM " . DB_PREFIX . "category_to_customer_group WHERE category_id = '" . (int)$category_id . "' AND customer_group_id = '" . (int)$category_customer_group_id . "'");
+		
+		            if ($checked) {
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "category_to_customer_group SET category_id = '" . (int)$category_id . "', customer_group_id = '" . (int)$category_customer_group_id . "'");
+		            }
+
+                    return 'ok';
+                }
+			]]></add>
+		</operation>
+	</file>
+    
+    <file name="admin/model/customer/customer_group.php">
+		<operation>
+			<search position="after"><![CDATA[
+		 		 $this->db->query("DELETE FROM " . DB_PREFIX . "customer_group WHERE customer_group_id = '" . (int)$customer_group_id . "'");
+			]]></search>
+			<add><![CDATA[
+				$this->db->query("DELETE FROM " . DB_PREFIX . "category_to_customer_group WHERE customer_group_id = '" . (int)$category_customer_group_id . "'");
+			]]></add>
+		</operation>
+	</file>
+    
+    <file name="admin/language/en-gb/catalog/category.php">
+		<operation>
+			<search position="after"><![CDATA[
+		 		 <?php
+			]]></search>
+			<add><![CDATA[
+				$_['text_category_customer_groups']      = 'Customer Groups';
+                $_['help_category_customer_groups']      = 'Select each Customer Group to which this category will be available';
+                $_['column_category_customer_groups']    = 'Customer Group';
+                $_['text_close']                         = 'Close';
+			]]></add>
+		</operation>
+	</file>
+    
+    <file name="admin/view/template/catalog/category_form.twig">
+		<operation>
+			<search position="before" offset="1"><![CDATA[
+		 		 <label class="col-sm-2 control-label">{{ entry_store }}</label>
+			]]></search>
+			<add><![CDATA[
+				<div class="form-group">
+                <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_category_customer_groups }}">{{ text_category_customer_groups }}</span></label>
+                <div class="col-sm-10">
+                  <div class="well well-sm" style="height: 100%; overflow: auto;">
+                    {% if existing_category is not defined %}
+                    {% for customer_group in customer_groups %}
+                    <div class="checkbox">
+                      <label>
+                        {% if customer_group.customer_group_id in config_default_category_customer_groups %}
+                        <input type="checkbox" name="category_customer_group[]" value="{{ customer_group.customer_group_id }}" checked="checked" />
+                        {{ customer_group.name }}
+                        {% else %}
+                        <input type="checkbox" name="category_customer_group[]" value="{{ customer_group.customer_group_id }}" />
+                        {{ customer_group.name }}
+                        {% endif %}
+                      </label>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    {% for customer_group in customer_groups %}
+                    <div class="checkbox">
+                      <label>
+                        {% if customer_group.customer_group_id in category_customer_group %}
+                        <input type="checkbox" name="category_customer_group[]" value="{{ customer_group.customer_group_id }}" checked="checked" />
+                        {{ customer_group.name }}
+                        {% else %}
+                        <input type="checkbox" name="category_customer_group[]" value="{{ customer_group.customer_group_id }}" />
+                        {{ customer_group.name }}
+                        {% endif %}
+                      </label>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+			]]></add>
+		</operation>
+	</file>
+    
+    <file name="admin/view/template/catalog/category_list.twig">
+		<operation>
+			<search position="before"><![CDATA[
+		 		 <td class="text-right">{{ column_action }}</td>
+			]]></search>
+			<add><![CDATA[
+                {% if config_show_admin_category_customer_groups_in_category_list == 1 %}
+				 <td>{{ column_category_customer_groups }}</td>
+                 {% endif %}
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="iafter"><![CDATA[
+		 		 {{ header }}
+			]]></search>
+			<add><![CDATA[
+               <style>
+                .inline-edit {
+                    display:none;
+                    margin-right: 0px;
+                    margin-left: 0px;
+                    clear:both;
+                }
+                .inline-edit input {
+                    max-width:90%;
+                    cursor: text;
+                    border:1px solid #ccc;
+                }
+
+                td > span,/*.inline-edit +span,*/  span {
+                    cursor: pointer;
+                }
+                
+              
+                </style>
+			]]></add>
+		</operation>
+    
+		<operation>
+			<search position="before"><![CDATA[
+		 		 <td class="text-right"><a href="{{ category.edit }}" data-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary"><i class="fa fa-pencil"></i></a></td>
+			]]></search>
+			<add><![CDATA[
+                {% if config_show_admin_category_customer_groups_in_category_list == 1 %}
+                <td style="padding:5px;" nowrap="nowrap" >
+                    <div class="inline-edit" style="display:none" id="customer-group-{{ category.category_id }}" value="{{ category.category_id }}">
+                        <div style="height:100%;overflow-y:auto;overflow-x:hidden;">
+                            {% for customer_group in customer_groups %}
+                            {% set checked = customer_group.customer_group_id in category.category_customer_groups ? 'checked' : '' %}
+                           
+                            <label><input type="checkbox" style="cursor:pointer;" value="{{ customer_group.customer_group_id }}"{{ checked }} 
+                                onclick="save_customer_groups(this,{{ category.category_id }})">&nbsp;<span>{{ customer_group.name }}</span></label>
+                            <br/>
+                            {% endfor %}   
+                        </div>
+                        <div class="close-input" style="text-align:center;width:100%; background:#1e91cf;padding:5px;cursor:pointer;">
+                            <a style="color:#fff;">{{ text_close }}</a>
+                        </div>
+                    </div>                                
+                    <span>
+                    {% set found = false %}
+                    {% for customer_group in customer_groups %}
+                        {% if customer_group.customer_group_id in category.category_customer_groups %}
+                       
+                            {% set found = true %}
+                            <div>{{ customer_group.name }}</div>
+                        {% endif %}
+                    {% endfor %}
+                    {% if not found %}- - -{% endif %}
+                    </span>                
+                </td>
+            {% endif %}
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="before"><![CDATA[
+		 		 {{ footer }}
+			]]></search>
+			<add><![CDATA[
+              <script type="text/javascript"><!--
+                    $(document).ready(function() { 
+                        $('.inline-edit').each(function(index, wrapper) {
+                            $(this).next().not('.hide-edit').click(function() {
+                                $(wrapper).show();
+                            })
+                        });
+                        $('div.close-input').click(function() {
+                            $(this).closest('.inline-edit').hide();
+                        });                                               
+                        
+                    });
+                    
+                      function save_customer_groups(input,id) {
+                      var customer_group = $(input).val();
+                      var checked        = $(input).is(':checked') ? '1':'0';
+                      
+                      $(input).css('cursor','progress');
+                      $.ajax({
+                         url: 'index.php?route=catalog/category/saveCategoryCustomerGroup&category_id='+id+'&category_customer_group_id='+customer_group+'&checked='+checked+'&user_token={{ user_token }}',
+                         dataType: 'json',
+                         data: {},
+                         success: function(customer_group) {         
+                            var customer_groups = $('#customer-group-'+id).next('span');                        
+                            var customer_groups_list = '';
+                            $('#customer-group-'+id+' input').each(function(index) {
+                                if($(this).is(':checked')) {
+                                    customer_groups_list = customer_groups_list + $(this).next('span').html() + '<br/>';
+                                }
+                            });
+                            if(customer_groups_list == '') customer_groups_list = '- - -';
+                            customer_groups.html(customer_groups_list);
+                            
+                         }
+                      });
+                      $(input).css('cursor','default');
+                   }
+                //--></script>
+			]]></add>
+		</operation>
+	</file>
+    
+    <!-- Settings -->
+    
+    <file name="admin/controller/setting/setting.php">
+		<operation>
+			<search position="before"><![CDATA[
+		 		 if (isset($this->request->post['config_stock_checkout'])) {
+			]]></search>
+			<add><![CDATA[
+		 		 if (isset($this->request->post['config_show_admin_category_customer_groups_in_category_list'])) {
+			         $data['config_show_admin_category_customer_groups_in_category_list'] = $this->request->post['config_show_admin_category_customer_groups_in_category_list'];
+		         } else {
+			         $data['config_show_admin_category_customer_groups_in_category_list'] = $this->config->get('config_show_admin_category_customer_groups_in_category_list');			
+		         }
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="after"><![CDATA[
+		 		$data['customer_groups'] = $this->model_customer_customer_group->getCustomerGroups();
+			]]></search>
+			<add><![CDATA[
+		 		 if (isset($this->request->post['config_default_category_customer_groups'])) {
+			         $data['config_default_category_customer_groups'] = $this->request->post['config_default_category_customer_groups'];
+		         } elseif ($this->config->get('config_default_category_customer_groups')) {
+			         $data['config_default_category_customer_groups'] = $this->config->get('config_default_category_customer_groups');
+		         } else {
+			         $data['config_default_category_customer_groups'] = array();
+		         }
+
+                 if (isset($this->request->post['config_update_category_customer_groups_in_category_list'])) {
+			         $data['config_update_category_customer_groups_in_category_list'] = $this->request->post['config_update_category_customer_groups_in_category_list'];
+		         } else {
+			         $data['config_update_category_customer_groups_in_category_list'] = $this->config->get('config_update_category_customer_groups_in_category_list');			
+		         }
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="before"><![CDATA[
+		 		 if (isset($this->error['customer_group_display'])) {
+			]]></search>
+			<add><![CDATA[
+		 		 if (isset($this->error['default_category_customer_groups'])) {
+			         $data['error_default_category_customer_groups'] = $this->error['default_category_customer_groups'];
+		         } else {
+			         $data['error_default_category_customer_groups'] = '';
+		         }
+			]]></add>
+		</operation>
+	</file>
+    
+    <file name="admin/view/template/setting/setting.twig">
+		<operation>
+			<search position="after"><![CDATA[
+		 		 <div class="tab-pane" id="tab-option">
+		 		 			]]></search>
+			<add><![CDATA[
+			<fieldset>
+			<legend>{{ text_categories_by_customer_group }}</legend>
+            <div class="form-group">
+                  <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_default_category_customer_groups }}">{{ entry_default_category_customer_groups }}</span></label>
+                  <div class="col-sm-10">
+                    {% for customer_group in customer_groups %}
+                    <div class="checkbox">
+                      <label>
+                        {% if customer_group.customer_group_id in config_default_category_customer_groups %}
+                        <input type="checkbox" name="config_default_category_customer_groups[]" value="{{ customer_group.customer_group_id }}" checked="checked" />
+                        {{ customer_group.name }}
+                        {% else %}
+                        <input type="checkbox" name="config_default_category_customer_groups[]" value="{{ customer_group.customer_group_id }}" />
+                        {{ customer_group.name }}
+                        {% endif %}
+                      </label>
+                    </div>
+                    {% endfor %}
+                    
+                  </div>
+                </div>
+				<div class="form-group">
+                  <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ entry_show_admin_category_customer_groups_in_category_list }}">{{ entry_show_admin_category_customer_groups_in_category_list }}</span></label>
+                  <div class="col-sm-10">
+                    <label class="radio-inline">
+                      {% if config_show_admin_category_customer_groups_in_category_list == 1 %}
+                      <input type="radio" name="config_show_admin_category_customer_groups_in_category_list" value="1" checked="checked" />
+                      {{ text_yes }}
+                      {% else %}
+                      <input type="radio" name="config_show_admin_category_customer_groups_in_category_list" value="1" />
+                      {{ text_yes }}
+                      {% endif %}
+                    </label>
+                    <label class="radio-inline">
+                      {% if config_show_admin_category_customer_groups_in_category_list == 0 %}
+                      <input type="radio" name="config_show_admin_category_customer_groups_in_category_list" value="0" checked="checked" />
+                      {{ text_no }}
+                      {% else %}
+                      <input type="radio" name="config_show_admin_category_customer_groups_in_category_list" value="0" />
+                      {{ text_no }}
+                      {% endif %}
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_update_category_customer_groups_in_category_list }}">{{ entry_update_category_customer_groups_in_category_list }}</span></label>
+                  <div class="col-sm-10">
+                    <label class="radio-inline">
+                      {% if config_update_category_customer_groups_in_category_list == 1 %}
+                      <input type="radio" name="config_update_category_customer_groups_in_category_list" value="1" checked="checked" />
+                      {{ text_yes }}
+                      {% else %}
+                      <input type="radio" name="config_update_category_customer_groups_in_category_list" value="1" />
+                      {{ text_yes }}
+                      {% endif %}
+                    </label>
+                    <label class="radio-inline">
+                      {% if config_update_category_customer_groups_in_category_list == 0 %}
+                      <input type="radio" name="config_update_category_customer_groups_in_category_list" value="0" checked="checked" />
+                      {{ text_no }}
+                      {% else %}
+                      <input type="radio" name="config_update_category_customer_groups_in_category_list" value="0" />
+                      {{ text_no }}
+                      {% endif %}
+                    </label>
+                  </div>
+                </div>            	
+				</fieldset>
+			]]></add>
+		</operation>
+	</file>
+    
+    <file name="admin/language/en-gb/setting/setting.php">
+		<operation>
+		    <search position="after"><![CDATA[
+		    	<?php
+		    ]]></search>
+		    <add><![CDATA[
+		   		$_['entry_show_admin_category_customer_groups_in_category_list']      = 'Show customer groups in Admin category list.';
+                $_['text_categories_by_customer_group']                               = 'Categories by Customer Groups.';
+                $_['entry_default_category_customer_groups']                         = 'Set the Default Customer Groups.';
+                $_['help_default_category_customer_groups']                          = 'Each checked group will also be checked whenever you create a new category.';
+                $_['entry_update_category_customer_groups_in_category_list']          = 'Update all categories';
+                $_['help_update_category_customer_groups_in_category_list']           = 'Set this to yes and all categories with NO customer group assigned will be updated with all the checked default customer groups from above. Use this only the first time you install this extension!';
+		    ]]></add>	
+		</operation>
+	</file>
+    
+    <!-- Front End - Catalog -->
+    
+    <file name="catalog/model/catalog/category.php">
+		<operation>
+			<search position="iafter" index="1,2,3"><![CDATA[
+		 		 LEFT JOIN " . DB_PREFIX . "category_to_store c2s ON (c.category_id = c2s.category_id)
+			]]></search>
+			<add><![CDATA[
+				LEFT JOIN " . DB_PREFIX . "category_to_customer_group c2cg ON (c.category_id = c2cg.category_id)
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="iafter" index="1,2,3"><![CDATA[
+		 		 AND c2s.store_id = '" . (int)$this->config->get('config_store_id') . "'
+			]]></search>
+			<add><![CDATA[
+				AND c2cg.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "'
+			]]></add>
+		</operation>
+	</file>
+
+</modification>

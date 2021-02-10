@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+	<name>PSM_Products_By_Customer_groups Bulk edit</name>
+	<version>1.0.0. oc3011-3020</version>
+	<code>PSM_Products_By_Customer_groups</code>
+	<author>OC-addons - oc-addons.com</author>
+    <description>Add bulk update functionality to Products by Customer Groups extension</description>
+
+    <file name="admin/view/template/catalog/product_list.twig" error="skip">
+		<operation>
+			<search position="after"><![CDATA[
+                <form action="{{ delete }}" method="post" enctype="multipart/form-data" id="form-product">
+			]]></search>
+			<add><![CDATA[
+            {% if config_show_admin_product_customer_groups_in_product_list == 1 %}
+            <div class="btn btn-primary" id="open-bulk-options" style="margin-bottom:5px;"><i class="fa fa-search"></i> {{ text_bulk_update_open }}</div>
+            <div id="bulk-update-collapse" style="display:none">
+                <div class="well">
+                    <div class="row">
+            <div class="form-group">
+                  <label class="col-sm-2 control-label" for="input-status"><span data-toggle="tooltip" title="{{ text_bulk_update_label_help }}">{{ text_bulk_update_label }}</span></label>
+                  <div class="col-sm-3">
+                    {% for p2cg_bulk in customer_groups %}
+                    <div class="checkbox">
+                      <label>
+                        {% if p2cg_bulk == '' %}
+                        <input type="checkbox" name="bulkproductcustomergroupupdate[]" value="{{ p2cg_bulk.customer_group_id }}" checked="checked" />
+                        {{ p2cg_bulk.name }}
+                        {% else %}
+                        <input type="checkbox" name="bulkproductcustomergroupupdate[]" value="{{ p2cg_bulk.customer_group_id }}" />
+                        {{ p2cg_bulk.name }}
+                        {% endif %}
+                      </label>
+                    </div>
+                    {% endfor %}
+                  </div>
+                <button type="button" data-toggle="tooltip" title="" class="btn btn-primary" onclick="$('#form-product').attr('action', '{{ bulk_update_p2cg }}').submit()"><i class="fa fa-save"></i>{{ button_bulk_update }}</button>
+                </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+			]]></add>
+		</operation>
+        
+        <operation>
+			<search position="before"><![CDATA[
+		 		{{ footer }}
+			]]></search>
+			<add><![CDATA[
+			    <script type="text/javascript"><!--
+                $('#open-bulk-options').click(function(){
+                    var link = $(this);
+                    $('#bulk-update-collapse').slideToggle('slow', function() {
+                        if ($(this).is(':visible')) {
+                            link.html('<i class="fa fa-search"></i> {{ text_bulk_update_close }}');                
+                        } else {
+                            link.html('<i class="fa fa-search"></i> {{ text_bulk_update_open }}');                
+                        }        
+                    });       
+                });
+                //--></script>
+
+                <script type="text/javascript"><!--
+                $('#button-bulk-update').on('click', function() {
+                    var url = 'index.php?route=catalog/product&user_token={{ user_token }}';
+                    location = url;
+                });
+                //--></script>
+			]]></add>
+		</operation>
+	</file>
+    
+    <file name="admin/controller/catalog/product.php">
+		<operation>
+		    <search position="after"><![CDATA[
+		    	$data['delete'] = $this->url->link('catalog/product/delete', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		    ]]></search>
+		    <add><![CDATA[
+		   		$data['bulk_update_p2cg'] = $this->url->link('catalog/product/bulk_update_p2cg', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		    ]]></add>	
+		</operation>
+        
+        <operation>
+		    <search position="before"><![CDATA[
+		    	public function delete() {
+		    ]]></search>
+		    <add><![CDATA[
+		   		public function bulk_update_p2cg() {
+                    $this->load->language('catalog/product');
+
+                    $this->document->setTitle($this->language->get('heading_title'));
+
+                    $this->load->model('catalog/product');
+
+                    if (isset($this->request->post['selected']) && $this->validateDelete()) {
+                        foreach ($this->request->post['selected'] as $product_id) {
+                            $selected_customer_groups = $this->request->post['bulkproductcustomergroupupdate'];
+                           $this->model_catalog_product->bulkUpdateP2cg($product_id, $selected_customer_groups);
+                    }
+
+                    $this->session->data['success'] = $this->language->get('text_bulk_success');
+
+                    $url = '';
+
+                    if (isset($this->request->get['filter_name'])) {
+                        $url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
+                    }
+
+                    if (isset($this->request->get['filter_model'])) {
+                        $url .= '&filter_model=' . urlencode(html_entity_decode($this->request->get['filter_model'], ENT_QUOTES, 'UTF-8'));
+                    }
+
+                    if (isset($this->request->get['filter_price'])) {
+                        $url .= '&filter_price=' . $this->request->get['filter_price'];
+                    }
+
+                    if (isset($this->request->get['filter_quantity'])) {
+                        $url .= '&filter_quantity=' . $this->request->get['filter_quantity'];
+                    }
+
+                    if (isset($this->request->get['filter_status'])) {
+                        $url .= '&filter_status=' . $this->request->get['filter_status'];
+                    }
+
+                    if (isset($this->request->get['sort'])) {
+                        $url .= '&sort=' . $this->request->get['sort'];
+                    }
+
+                    if (isset($this->request->get['order'])) {
+                        $url .= '&order=' . $this->request->get['order'];
+                    }
+
+                    if (isset($this->request->get['page'])) {
+                        $url .= '&page=' . $this->request->get['page'];
+                    }
+
+                    $this->response->redirect($this->url->link('catalog/product', 'user_token=' . $this->session->data['user_token'] . $url, true));
+                    }
+
+                    $this->getList();
+                }
+		    ]]></add>	
+		</operation>
+	</file>
+    
+    <file name="admin/model/catalog/product.php" error="skip">
+		<operation>
+			<search position="before"><![CDATA[
+		 		public function deleteProduct($product_id) {
+			]]></search>
+			<add><![CDATA[
+				public function bulkUpdateP2cg($product_id, $selected_customer_groups) {
+                    if (isset($selected_customer_groups)) {
+                        $this->db->query("DELETE FROM " . DB_PREFIX . "product_to_customer_group WHERE product_id = '" . (int)$product_id . "'");
+
+                        foreach ($selected_customer_groups as $customer_group_id) {
+                            $this->db->query("INSERT INTO " . DB_PREFIX . "product_to_customer_group SET product_id = '" . (int)$product_id . "', customer_group_id = '" . (int)$customer_group_id . "'");
+                        }
+                    }
+                }
+			]]></add>
+		</operation>	
+	</file>
+    
+    
+    <file name="admin/language/en-gb/catalog/product.php" error="skip">
+		<operation>
+			<search position="after"><![CDATA[
+		 		<?php
+			]]></search>
+			<add><![CDATA[
+				$_['text_bulk_update_open'] = 'Open bulk update option';
+                $_['text_bulk_update_close'] = 'Close bulk update options';
+                $_['text_bulk_update_label'] = 'Bulk update Products to Customer Groups';
+                $_['text_bulk_update_label_help'] = 'First select some products from the list below and after that choose the customer group(s) you want them to be assigned to. After that hit the Bulk Update button';
+                $_['button_bulk_update'] = ' Bulk Update!';
+                $_['text_bulk_success'] = 'Success: You have bulk updated the products to Customer Groups';
+			]]></add>
+		</operation>	
+	</file>
+</modification>
