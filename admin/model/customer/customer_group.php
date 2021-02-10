@@ -1,19 +1,19 @@
 <?php
 class ModelCustomerCustomerGroup extends Model {
 	public function addCustomerGroup($data) {
-		$this->db->query("INSERT INTO " . DB_PREFIX . "customer_group SET approval = '" . (int)$data['approval'] . "', sort_order = '" . (int)$data['sort_order'] . "'");
+		$this->db->query("INSERT INTO " . DB_PREFIX . "customer_group SET approval = '" . (int)$data['approval'] . "', type = '" . (int)$data['type'] . "',  sort_order = '" . (int)$data['sort_order'] . "'");
 
 		$customer_group_id = $this->db->getLastId();
 
 		foreach ($data['customer_group_description'] as $language_id => $value) {
 			$this->db->query("INSERT INTO " . DB_PREFIX . "customer_group_description SET customer_group_id = '" . (int)$customer_group_id . "', language_id = '" . (int)$language_id . "', name = '" . $this->db->escape($value['name']) . "', description = '" . $this->db->escape($value['description']) . "'");
 		}
-		
+
 		return $customer_group_id;
 	}
 
 	public function editCustomerGroup($customer_group_id, $data) {
-		$this->db->query("UPDATE " . DB_PREFIX . "customer_group SET approval = '" . (int)$data['approval'] . "', sort_order = '" . (int)$data['sort_order'] . "' WHERE customer_group_id = '" . (int)$customer_group_id . "'");
+		$this->db->query("UPDATE " . DB_PREFIX . "customer_group SET approval = '" . (int)$data['approval'] . "', type = '" . (int)$data['type'] . "', sort_order = '" . (int)$data['sort_order'] . "' WHERE customer_group_id = '" . (int)$customer_group_id . "'");
 
 		$this->db->query("DELETE FROM " . DB_PREFIX . "customer_group_description WHERE customer_group_id = '" . (int)$customer_group_id . "'");
 

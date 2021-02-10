@@ -7,6 +7,9 @@ $_['text_success']      = 'Success: You have modified customer groups!';
 $_['text_list']         = 'Customer Group List';
 $_['text_add']          = 'Add Customer Group';
 $_['text_edit']         = 'Edit Customer Group';
+$_['text_off']          = 'OFF';
+$_['text_retail']       = 'Retail';
+$_['text_dropshipper']  = 'Dropshipper';
 
 // Column
 $_['column_name']       = 'Customer Group Name';
@@ -18,6 +21,7 @@ $_['entry_name']        = 'Customer Group Name';
 $_['entry_description'] = 'Description';
 $_['entry_approval']    = 'Approve New Customers';
 $_['entry_sort_order']  = 'Sort Order';
+$_['entry_type']        = 'Customer Group Type';
 
 // Help
 $_['help_approval']     = 'Customers must be approved by an administrator before they can login.';
