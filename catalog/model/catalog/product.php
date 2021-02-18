@@ -274,17 +274,17 @@ class ModelCatalogProduct extends Model {
 
 	public function getPopularProducts($limit) {
 		$product_data = $this->cache->get('product.popular.' . (int)$this->config->get('config_language_id') . '.' . (int)$this->config->get('config_store_id') . '.' . $this->config->get('config_customer_group_id') . '.' . (int)$limit);
-	
+
 		if (!$product_data) {
 			$query = $this->db->query("SELECT p.product_id FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "' ORDER BY p.viewed DESC, p.date_added DESC LIMIT " . (int)$limit);
-	
+
 			foreach ($query->rows as $result) {
 				$product_data[$result['product_id']] = $this->getProduct($result['product_id']);
 			}
-			
+
 			$this->cache->set('product.popular.' . (int)$this->config->get('config_language_id') . '.' . (int)$this->config->get('config_store_id') . '.' . $this->config->get('config_customer_group_id') . '.' . (int)$limit, $product_data);
 		}
-		
+
 		return $product_data;
 	}
 
@@ -332,6 +332,109 @@ class ModelCatalogProduct extends Model {
 		}
 
 		return $product_attribute_group_data;
+	}
+
+	public function getProductVariants($product_id) {
+
+		$product_id = (int) $product_id;
+
+		$where = array();
+		$limit = '';
+
+		// if (isset($data['start']) && isset($data['limit'])) {
+		// 	if ($data['start'] < 0) {
+		// 		$data['start'] = 0;
+		// 	}
+		//
+		// 	if ($data['limit'] < 1) {
+		// 		$data['limit'] = 20;
+		// 	}
+		//
+		// 	$limit .= " LIMIT " . (int)$data['start'] . "," . (int)$data['limit'];
+		// }
+
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "ka_product_variants
+			WHERE product_id = '$product_id'
+			$limit
+		");
+
+		if (empty($query->rows)) {
+			return false;
+		}
+
+
+		$variants = $query->rows;
+		$variant_versions = array();
+
+		foreach ($variants as $k => &$v) {
+
+			$qry = $this->db->query("SELECT * FROM " . DB_PREFIX . "ka_variant_options kvo
+				LEFT JOIN " . DB_PREFIX . "option_value ov ON ov.option_value_id = kvo.option_value_id
+				LEFT JOIN `" . DB_PREFIX . "option` o ON o.option_id = ov.option_id
+				WHERE kvo.variant_id = '$v[variant_id]'
+				ORDER BY o.sort_order, o.option_id
+			");
+
+			$v['options'] = array();
+			// if (empty($qry->rows)) {
+			// 	$this->db->query("DELETE FROM " . DB_PREFIX . "ka_product_variants WHERE
+			// 		variant_id = '$v[variant_id]'
+			// 	");
+			// 	$this->log->write("getProductVariants: no variant options. Product_id:$product_id, variant_id: $v[variant_id]");
+			// 	continue;
+			// }
+
+			$v['options'] = $qry->rows;
+			$option_value_ids = array();
+			$version = '';
+			$is_valid_variant = true;
+			foreach ($v['options'] as &$vo) {
+
+				$qry_ov = $this->db->query("SELECT * FROM " . DB_PREFIX . "option_value ov
+					LEFT JOIN " . DB_PREFIX . "option_value_description ovd ON (ov.option_value_id = ovd.option_value_id)
+					WHERE ov.option_value_id = '" . (int)$vo['option_value_id'] . "'
+						AND ovd.language_id = '" . (int)$this->config->get('config_language_id') . "'
+					ORDER BY ov.sort_order, ov.option_value_id
+					"
+				);
+				$value = $qry_ov->row;
+
+				if (empty($value)) {
+					$is_valid_variant = false;
+					break;
+				}
+
+				// $option = $this->model_catalog_option->getOption($value['option_id']);
+				$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "option` o LEFT JOIN " . DB_PREFIX . "option_description od ON (o.option_id = od.option_id) WHERE o.option_id = '" . $value['option_id'] . "' AND od.language_id = '" . (int)$this->config->get('config_language_id') . "'");
+
+				$option = $query->row;
+
+				$vo['name']         = $option['name'];
+				$vo['value']        = $value['name'];
+				$vo['option']       = $option;
+				$vo['option_value'] = $value;
+				$option_value_ids[] = $value['option_value_id'];
+				$version .= $option['sort_order'] .
+					'.' . $option['option_id'] .
+					'.' . $value['sort_order'] .
+					'.' . $value['option_value_id'];
+			}
+			if (!$is_valid_variant) {
+				continue;
+			}
+
+			$variant_versions[$k] = $version;
+		}
+
+		$_variant_versions = $variant_versions;
+		usort($_variant_versions, 'version_compare');
+
+		$_variants = array();
+		foreach ($_variant_versions as $vv) {
+			$_variants[] = &$variants[array_search($vv, $variant_versions)];
+		}
+
+		return $_variants;
 	}
 
 	public function getProductOptions($product_id) {

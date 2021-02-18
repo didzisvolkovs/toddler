@@ -1,0 +1,98 @@
+{#
+    $Project: Product Variants $
+    $Author: karapuz team <support@ka-station.com> $
+    $Version: 3.0.2 $ ($Revision: 245 $)
+#}
+
+{% if variants_pagination %}
+  <div class="row">
+    <div class="col-sm-6 text-left">{{ variants_pagination }}</div>
+    <div class="col-sm-6 text-right">{{ variants_results }}</div>
+  </div>
+{% endif %}
+	<div class="table-responsive">
+		<table class="table table-striped table-bordered table-hover">
+			<thead>
+				<tr>
+					<td class="text-left">{{ _context['Variants'] }}</td>
+					<td class="text-left" width="200px">{{ _context['Model'] }}</td>
+					<td class="text-left" width="200px">{{ _context['EAN'] }}</td>
+					<td class="text-left" width="160px">{{ _context['Image'] }}</td>
+					<td class="text-left" width="100px">{{ _context['Price'] }}</td>
+					<td class="text-left" width="100px">{{ _context['Cost Price'] }}</td>
+					<td class="text-left" width="100px">{{ _context['Quantity'] }}</td>
+					<td class="text-left" width="100px">{{ _context['Weight'] }}</td>
+					<td class="text-left" width="20px">{{ _context['Default'] }}</td>
+				</tr>
+			</thead>
+
+			{% if (product_variants) %}
+				{% set v_row = 0 %}
+				{% for v in product_variants %}
+
+					{% set v_row = v.variant_id %}
+
+					<tbody id="variant-row{{ v_row }}">
+					<tr>
+						<td class="text-left">
+							{% if (v['options']) %}
+								{% for vo in v['options'] %}
+									{{ vo['name'] ~ " : " ~ vo['value'] ~ "<br />" }}
+								{% endfor %}
+							{% else %}
+								{{ "options not found" }}
+							{% endif %}
+
+						</td>
+						<td class="text-left">
+							ID: {{ v.variant_id }}
+							<input type="hidden" name="product_variants[{{ v_row }}][variant_id]" value="{{ v['variant_id'] }}" />
+							<input type="text" name="product_variants[{{ v_row }}][model]" value="{{ v['model']|e }}" class="form-control" />
+						</td>
+            <td class="text-left">
+              <input type="text" name="product_variants[{{ v_row }}][ean]" value="{{ v['ean'] }}" class="form-control" />
+            </td>
+						<td class="text-left">
+							<div class="image">
+								<a href="" id="v_thumb{{ v_row }}" data-toggle="image" class="img-thumbnail">
+									<img src="{{ v['thumb'] }}" alt="" title="" data-placeholder="{{ placeholder }}" />
+								</a>
+								<input type="hidden" name="product_variants[{{ v_row }}][image]" value="{{ v['image'] }}" id="v_image{{ v_row }}" />
+							</div>
+						</td>
+						<td class="text-left">
+							<input type="text" name="product_variants[{{ v_row }}][price]" value="{{ v['price'] }}" class="form-control" />
+						</td>
+						<td class="text-left">
+							<input type="text" name="product_variants[{{ v_row }}][ka_cost_price]" value="{{ v['ka_cost_price'] }}" class="form-control" />
+						</td>
+						<td class="text-left">
+							<input type="text" name="product_variants[{{ v_row }}][quantity]" value="{{ v['quantity'] }}" class="form-control" />
+						</td>
+						<td class="text-left">
+							<input type="text" name="product_variants[{{ v_row }}][weight]" value="{{ v['weight'] }}" class="form-control" />
+						</td>
+						<td class="text-left">
+							<input type="radio" name="def_variant_id" value="{{ v['variant_id'] }}" {% if (v['variant_id'] == def_variant_id) %} checked="checked" {% endif %} autocomplete="off" />
+						</td>
+					</tr>
+					</tbody>
+					{% set v_row = v_row + 1 %}
+				{% endfor %}
+			{% else %}
+				<tr>
+					<td colspan="8">
+						<br /><br />
+						<p align="center">Variants can be defined only after you have added variant options on the option tab and saved the product with them.</p>
+						<br /><br />
+					</td>
+				</tr>
+			{% endif %}
+		</table>
+	</div>
+{% if variants_pagination %}
+  <div class="row">
+    <div class="col-sm-6 text-left">{{ variants_pagination }}</div>
+    <div class="col-sm-6 text-right">{{ variants_results }}</div>
+  </div>
+{% endif %}

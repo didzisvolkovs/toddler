@@ -1,0 +1,75 @@
+{#
+    $Project: Product Variants $
+    $Author: karapuz team <support@ka-station.com> $
+    $Version: 3.0.2 $ ($Revision: 236 $)
+#}
+
+<div id="modal-option-rebuild" class="modal">
+	<div class="modal-dialog"  style="width: 600px; padding-top: 200px;">
+	  <div class="modal-content">
+	    <div class="modal-header">
+	      <h4 class="modal-title">Rebuild Variants</h4>
+	    </div>
+	    
+    	<div class="modal-body">
+				<p>Variant Rebuild process started. The page updates every 10-15 seconds. Please do not close the window.</p>
+				<div>Completion at: <span id="total_rebuilt_options">0%</span></div>
+	    </div>
+<!--	    
+	    <div class="modal-footer">
+				<button id="btnVOClose" type="button" title="Close" class="btn btn-primary disabled">Close</button>
+	    </div>
+-->	    
+	  </div>
+	</div>
+</div>
+
+<script type="text/javascript"><!--
+
+function VORebuildStart() {
+	$('#btnVOClose').addClass('disabled');
+	VORebuildLoop();
+}
+
+function VORebuildLoop() {
+	
+	$.ajax({
+		url: 'index.php?route=catalog/option/rebuildVOptions&user_token=' + getURLVar('user_token'),
+		dataType: 'json',
+		success: function(json) {
+			if (!json['result']) {
+				alert('Ajax error. Please reload the page.');
+				return;
+			}
+			
+			$('#total_rebuilt_options').html(json['complete_at']);
+			
+			if (json['result'] == 'continue') {
+				VORebuildLoop();
+			}
+			
+			if (json['result'] == 'end') {
+				VORebuildEnd();
+			}
+		}
+	});	
+
+}
+
+function VORebuildEnd() {
+	$('#btnVOClose').removeClass('disabled');
+	location.reload();
+}
+
+
+function onVariantOptionRebuild() {
+	$('#modal-option-rebuild').modal({
+		'backdrop':'static',
+		'show': true,
+		'keyboard': false
+	});
+	
+	VORebuildStart();
+}
+
+</script>

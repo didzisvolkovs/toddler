@@ -1,0 +1,158 @@
+{#
+    $Project: Product Variants $
+    $Author: karapuz team <support@ka-station.com> $
+    $Version: 3.0.2 $ ($Revision: 249 $)
+#}
+
+<input type="hidden" id="variants_default_id" name="variants_default_id" value="{{ def_variant_id }}" />
+<input type="hidden" id="variants_serialized" name="variants_serialized" value="{{ variants_serialized|e }}" />
+<input type="hidden" id="variants_page" name="variants_page" value="{{ variants_page }}" />
+
+<div id="variants-tab-content">
+	{% include '/extension/ka_extensions/ka_variants/variants_tab_content.twig' %}
+</div>
+          
+<script>
+
+// keeps img[src] of variant images
+var global_img_data = {}
+
+// keeps data of form
+var global_form_data = {}
+
+function serializeToJSON(selector) {
+    var unindexed_array = $(selector).serializeArray();
+    var indexed_array = {};
+
+    $.map(unindexed_array, function(n, i){
+        indexed_array[n['name']] = n['value'];
+    });
+
+    return indexed_array;
+}
+
+/*
+	Adds handlers to pagination links
+*/
+function setPagesForPager() {
+
+	// set page numbers and removes hrefs
+	//
+	$('#variants-tab-content .pagination a').each(function(key, el) {
+		var page = $(el).attr('href').match(/page=(\d)/)
+
+		if (typeof(page) != 'undefined' && page && page.indexOf(1)) {
+			page = page[1]
+		} else {
+			page = 1;
+		}
+		
+		$(el).attr('data-page', page)
+
+		$(el).attr('href', 'javascript: void(0);')
+	});
+
+	// pagination handler
+	//
+	$('#variants-tab-content .pagination a[data-page]').on('click', function(e) {
+	
+		e.preventDefault();
+		e.stopPropagation();
+	
+		var $this = $(this);
+		var page = $this.data('page');
+		if (page) {
+			$('#variants_page').val(page);
+			page = '&page=' + page;			
+		}
+		
+		// save variants data in variants serialized object
+		//	
+		var local_form_data = serializeToJSON("[name*=product_variants]");
+
+		global_form_data = $('#variants_serialized').val();
+		if (global_form_data) {
+			global_form_data = JSON.parse($('#variants_serialized').val());
+		}
+		global_form_data = $.extend(global_form_data, local_form_data);
+		$('#variants_serialized').val(JSON.stringify(global_form_data));
+
+		// save image sources
+		//
+		$('#variants-tab-content [name*="product_variants"][name*="[image]"]').each(function(idx, el) {
+			var $el = $(el);
+			if ($el.parent('.image').find('img').length) {
+				global_img_data[$el.attr('name')] = $el.parent('.image').find('img').attr('src');
+			}
+		});
+
+		// save the default variant selector
+		//
+		$('#variants-tab-content [name="def_variant_id"]:checked').each(function(idx, el) {
+			$('#variants_default_id').val($(el).val());
+		});
+		
+		// call the ajax to request an update from the server
+		//
+		$.ajax({
+			url: 'index.php?route=extension/ka_extensions/ka_variants/product/variantsTabAjax&user_token={{ user_token }}&product_id={{ product_id }}' + page,
+			dataType: 'json',
+			success: function(json) {
+				if (json['error']) {
+					alert(json['error']);
+				}
+				if (json['html']) {
+				
+					// apply a modified form data to the received html
+					var $new_html = $(json['html']);
+					
+					$new_html.find('[name*=product_variants]').each(function(idx, el) {
+						var name = $(this).attr('name');
+						if (typeof(global_form_data[name]) != 'undefined') {
+						
+							// restore the form value
+							$(this).val(global_form_data[name]);
+							
+							// restore the image when a form image value is being processed
+							if (name.match(/\[image\]/)) {
+								if (typeof(global_img_data[name]) != 'undefined') {
+									$(this).parent('.image').find('img').attr('src', global_img_data[name]);
+								}
+							}
+						}
+					});
+
+					// restore the default variant_id
+					var default_variant_id = $('#variants_default_id').val();
+					if (default_variant_id) {
+						$new_html.find('input[name=def_variant_id]').prop('checked', false);							
+						$new_html.find('input[name=def_variant_id][value=' + default_variant_id + ']').prop('checked', true);
+					}
+					
+					// upload the new html to the div
+					$('#variants-tab-content').html($new_html);
+					
+					setPagesForPager();
+				}
+			}
+		});
+	});
+}
+
+$(document).ready(function() {
+	setPagesForPager();
+	
+	// copy the selectors data to single fields to reduce a number of post variables
+	$('#form-product').on('submit', function() {
+		$('[data-single-field]').each(function(idx, el) {
+			var selected = $(el).val();
+			if (selected) {
+				$("input[name='" + $(el).data('single-field') + "']").val(JSON.stringify(selected));
+			} else {
+				$("input[name='" + $(el).data('single-field') + "']").val('');
+			}
+		})
+	});
+});
+
+</script>
