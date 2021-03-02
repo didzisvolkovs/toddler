@@ -1,6 +1,7 @@
 .htaccess
 /config.php
 admin/config.php
+catalog/view/theme/default/template/*
 
 !index.html
 

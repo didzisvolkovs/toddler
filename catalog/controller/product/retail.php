@@ -91,7 +91,7 @@ class ControllerProductRetail extends Controller {
 
 			$product_total = $this->model_catalog_product->getTotalProducts($filter_data);
 
-			$results = $this->model_catalog_product->getProducts($filter_data);
+			$results = $this->model_catalog_product->getProducts();
 
 			// function get_data($key,$opt_data)
 			// {
@@ -150,18 +150,23 @@ class ControllerProductRetail extends Controller {
 			// }
 
 			$variants = $this->model_catalog_product->getProductVariants($result['product_id']);
-			//var_dump($variants);
-			// if (!empty($variants) && !empty($this->request->post['product_variants'])) {
-			// 	foreach ($variants as &$variant) {
-			// 		foreach($this->request->post['product_variants'] as $post_variant) {
-			// 			if ($variant['variant_id'] == $post_variant['variant_id']) {
-			// 				$variant = array_merge($variant, $post_variant);
-			// 				break;
-			// 			}
-			// 		}
-			// 	}
-			// }
-			// $this->data['product_variants'] = $variants;
+			$variants_opt = array();
+			if (!empty($variants)) {
+				foreach ($variants as &$variant) {
+					$variants_opt[] = array(
+						'variant_id' => $variant['variant_id'],
+						'product_id' => $variant['product_id'],
+						'price' 		 => $result['cgprice'] + $variant['price'] ,
+						'quantity' 		 => $variant['quantity'],
+						'model' 		 => $variant['model'],
+						'ean' 		 => $variant['ean'],
+						'image' 		 => $variant['image'],
+						'hash' 		 => $variant['hash'],
+						'options' 		 => $variant['options'],
+					);
+				}
+			}
+
 
 
 
@@ -203,12 +208,13 @@ class ControllerProductRetail extends Controller {
 					'price'       => $price,
 					'special'     => $special,
 					'tax'         => $tax,
-					'opt_mas'     => $opt_mas,
+					'variants'     => $variants_opt,
 					'minimum'     => $result['minimum'] > 0 ? $result['minimum'] : 1,
 					'rating'      => $result['rating'],
 					'href'        => $this->url->link('product/product', '&product_id=' . $result['product_id'] . $url)
 				);
 			}
+
 
 			$url = '';
 
@@ -362,7 +368,7 @@ class ControllerProductRetail extends Controller {
 			$data['footer'] = $this->load->controller('common/footer');
 			$data['header'] = $this->load->controller('common/header');
 
-			$this->response->setOutput($this->load->view('product/retail', $data));
+		   $this->response->setOutput($this->load->view('product/retail', $data));
 
 	}
 }
