@@ -368,10 +368,11 @@ class ModelCatalogProduct extends Model {
 
 		foreach ($variants as $k => &$v) {
 
-			$qry = $this->db->query("SELECT * FROM " . DB_PREFIX . "ka_variant_options kvo
+			$qry = $this->db->query("SELECT *, po.product_option_id, po.product_option_value_id FROM " . DB_PREFIX . "ka_variant_options kvo
 				LEFT JOIN " . DB_PREFIX . "option_value ov ON ov.option_value_id = kvo.option_value_id
 				LEFT JOIN `" . DB_PREFIX . "option` o ON o.option_id = ov.option_id
-				WHERE kvo.variant_id = '$v[variant_id]'
+				LEFT JOIN `" . DB_PREFIX . "product_option_value` po ON (po.option_id = ov.option_id) and (ov.option_value_id = po.option_value_id)
+				WHERE kvo.variant_id = '$v[variant_id]' and kvo.product_id = po.product_id
 				ORDER BY o.sort_order, o.option_id
 			");
 

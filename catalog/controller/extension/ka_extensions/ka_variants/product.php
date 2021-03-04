@@ -1,8 +1,8 @@
 <?php
-/* 
+/*
  $Project: Product Variants $
  $Author: karapuz team <support@ka-station.com> $
- $Version: 3.0.2 $ ($Revision: 236 $) 
+ $Version: 3.0.2 $ ($Revision: 236 $)
 */
 
 namespace extension\ka_extensions\ka_variants;
@@ -30,22 +30,22 @@ class ControllerProduct extends \KaController {
 		$this->load->model('catalog/product');
 		$kamodel_ka_variant = $this->kamodel('ka_variant');
 
-		$variant = $kamodel_ka_variant->getVariantByOptions($product_id, $this->request->post['option'], true);		
+		$variant = $kamodel_ka_variant->getVariantByOptions($product_id, $this->request->post['option'], true);
 		if (empty($variant)) {
 			die('variant not found');
 		}
-		
+
 		$variant_id = $variant['variant_id'];
-		
+
 		$json = array(
 			'error' => '',
 			'html'  => ''
 		);
-		
+
 		$product_info = $this->model_catalog_product->getProduct($product_id, $variant_id);
 
 		$show_discounted_price = (int)$this->config->get('ka_variants_show_discounted_price');
-		
+
 		if ($product_info) {
 
 			$quantity = 1;
@@ -53,7 +53,7 @@ class ControllerProduct extends \KaController {
 				$quantity = $this->request->post['quantity'];
 			}
 			$variant = $kamodel_ka_variant->getVariant($variant_id, 0, $quantity);
-			
+
 			$kamodel_ka_variant->substituteWithVariant($product_info, $variant);
 
 			// perform cart calculations for one product
@@ -64,12 +64,12 @@ class ControllerProduct extends \KaController {
 			$products = $tmp_cart->getProducts();
 			$tmp_cart->clear();
 			$this->session->data['api_id'] = 0;
-			
+
 			if (empty($products)) {
 				die('A temporary cart cannot be created');
 			}
 			$cart_product = reset($products);
-			
+
 			//calculate total values for the product
 			//
 			$option_price = $cart_product['option_price'];
@@ -80,21 +80,21 @@ class ControllerProduct extends \KaController {
 			$data['total_tax']     = false;
 			$data['total_special'] = false;
 			$data['you_save']      = false;
-			
+
 			if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
 				$total_price   = (float)$product_info['price'] * (int)$quantity + (float)$option_price * (int)$quantity;
 				$total_special = 0;
-			
+
 				if (!empty($cart_product['is_special_price'])) {
 					$total_special = $cart_product['price'] * (int)$quantity + (float)$option_price * (int)$quantity;
-					
+
 					$data['total_special']  = $this->currency->format($this->tax->calculate($total_special, $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
 					$data['you_save']       = '-' . number_format(((float)$total_price - (float)$total_special) / (float)$total_price * 100, 0) . '%';
 				}
 				$data['total_price'] = $this->currency->format($this->tax->calculate($total_price, $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
 				$data['total_tax']   = $this->currency->format((float)$total_special ? $total_special : $total_price, $this->session->data['currency']);
 			}
-			
+
 			$data['heading_title'] = $product_info['name'];
 
 			$data['text_select'] = $this->language->get('text_select');
@@ -135,7 +135,7 @@ class ControllerProduct extends \KaController {
 			$data['points'] = $product_info['points'];
 			$data['description'] = html_entity_decode($product_info['description'], ENT_QUOTES, 'UTF-8');
 			$data['quantity'] = $product_info['quantity'];
-			
+
 			if ($product_info['quantity'] <= 0) {
 				$data['stock'] = $product_info['stock_status'];
 			} elseif ($this->config->get('config_stock_display')) {
@@ -166,7 +166,7 @@ class ControllerProduct extends \KaController {
 					'thumb' => $this->model_tool_image->resize($result['image'], $this->config->get('theme_' . $this->config->get('config_theme') . '_image_additional_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_additional_height'))
 				);
 			}
-			
+
 
 			if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
 				$data['price'] = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
@@ -187,7 +187,7 @@ class ControllerProduct extends \KaController {
 			}
 
 			$discounts = $this->model_catalog_product->getProductDiscounts($this->request->get['product_id'], $variant_id);
-			
+
 			$data['discounts'] = array();
 
 			foreach ($discounts as $discount) {
@@ -196,7 +196,7 @@ class ControllerProduct extends \KaController {
 					'price'    => $this->currency->format($this->tax->calculate($discount['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency'])
 				);
 			}
-			
+
 			if ($product_info['minimum']) {
 				$data['minimum'] = $product_info['minimum'];
 			} else {
@@ -204,16 +204,16 @@ class ControllerProduct extends \KaController {
 			}
 
  			$data['review_status'] = $this->config->get('config_review_status');
- 			
+
  			if ($this->config->get('config_review_guest') || $this->customer->isLogged()) {
  				$data['review_guest'] = true;
  			} else {
  				$data['review_guest'] = false;
  			}
- 			
+
  			$data['reviews'] = sprintf($this->language->get('text_reviews'), (int)$product_info['reviews']);
  			$data['rating'] = (int)$product_info['rating'];
-			
+
 			$this->template = 'extension/ka_extensions/ka_variants/product_dynamic';
 
 
@@ -262,9 +262,9 @@ class ControllerProduct extends \KaController {
                     }
                 }
 
-               
+
                 $product_tabs = array();
-/* 
+/*
                 foreach($this->journal3->productTabs($product_info, $product_info['price'], $product_info['special']) as $module_id => $module_data) {
                     if ($module_data['position'] === 'quickview' && $this->journal3->document->isPopup()) {
                    	if ($tab = $this->load->controller('journal3/product_tabs', array('module_id' => $module_id, 'module_type' => 'product_tabs', 'product_info' => $product_info))) {
@@ -317,33 +317,33 @@ class ControllerProduct extends \KaController {
                 if ($this->journal3->document->isPopup()) {
                    $data['view_more_url'] = $this->url->link('product/product', 'product_id=' . (int)$this->request->get['product_id']);
                }
-               
+
                 $this->load->model('journal3/product');
                 $this->model_journal3_product->addRecentlyViewedProduct($this->request->get['product_id']);
 
                 $data['products_sold'] = $this->model_journal3_product->getProductsSold($this->request->get['product_id']);
                 $data['product_views'] = $product_info['viewed'];
-                
+
 				$this->data = $data;
 				$this->template = 'extension/ka_extensions/ka_variants/product_price';
 				$json['product_price'] = $this->render();
-				
+
 				$this->template = 'extension/ka_extensions/ka_variants/product_stats';
 				$json['product_stats'] = $this->render();
             } else {
 				$this->data = $data;
 				$json['html'] = $this->render();
-			}			
+			}
 			if (!empty($variant['image'])) {
 				$image = $variant['image'];
 			} else {
 				$image = $product_info['image'];
-			}			
+			}
 			$json['image'] = $this->model_tool_image->resize($image, $this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_thumb_height'));
 			$json['image_popup'] = $this->model_tool_image->resize($image, $this->config->get('theme_' . $this->config->get('config_theme') . '_image_popup_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_popup_height'));
-			
+
 			$json['disabled_options'] = $kamodel_ka_variant->getDisabledOptions($variant);
-			
+
 			// pass extra variables to the json response
 			//
 			$pass_variables = array(
@@ -353,13 +353,13 @@ class ControllerProduct extends \KaController {
 				'tax', 'total_tax',
 				'you_save'
 			);
- 			
+
 			foreach ($pass_variables as $v) {
 				if (isset($data[$v])) {
 					$json[$v] = $data[$v];
 				}
 			}
-			
+
 		} else {
 			$json['error'] = 'product not found';
 		}

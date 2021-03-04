@@ -163,7 +163,9 @@ class Cart {
 					}
 				}
 
-				$price = $product_query->row['price'];
+				// $price = $product_query->row['price'];
+				$price = $product_query->row['price'] + $product_query->rows['0']['price'];
+
 
 				// Product Discounts
 				$discount_quantity = 0;
