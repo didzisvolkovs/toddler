@@ -1,0 +1,145 @@
+{{ header }}
+<div class="container">
+<form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-option" class="form-horizontal">
+<div id="products">
+{% for product in products %}
+  <table id="customFields{{ product.product_id }}" class="table table-bordered table-hover additionalMargin alignment">
+  <input class="prodid" type="hidden" value="{{ product.product_id }}"  />
+  	<thead>
+  	<tr>
+  		<th>Product Name</th>
+  		<th>Options</th>
+      <th>Delivery Information</th>
+  		<th></th>
+  	</tr>
+  	</thead>
+  	<tbody>
+  		<tr>
+  			<td>
+          {{ product.name }}<br />
+          <img src="{{ product.thumb }}" width="50px" />
+        </td>
+  			<td>
+        {% if product.options %}
+          <hr>
+          <h3>{{ text_option }}</h3>
+          {% for option in product.options %}
+          {% if option.type == 'select' %}
+          <div class="form-group{% if option.required %} required {% endif %}">
+            <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
+            <select name="data[{{ product.product_id }}][option][{{ option.product_option_id }}]" id="input-option{{ option.product_option_id }}" class="form-control">
+              <option value="">{{ text_select }}</option>
+              {% for option_value in option.product_option_value %}
+              <option value="{{ option_value.product_option_value_id }}">{{ option_value.name }}
+              {% if option_value.price %}
+              ({{ option_value.price_prefix }}{{ option_value.price }})
+              {% endif %} </option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+          {% if option.type == 'radio' %}
+          <div class="form-group{% if option.required %} required {% endif %}">
+            <label class="control-label">{{ option.name }}</label>
+            <div id="input-option{{ option.product_option_id }}"> {% for option_value in option.product_option_value %}
+              <div class="radio">
+                <label>
+                  <input type="radio" name="data[{{ product.product_id }}][option][{{ option.product_option_id }}]" value="{{ option_value.product_option_value_id }}" />
+                  {% if option_value.image %} <img src="{{ option_value.image }}" alt="{{ option_value.name }} {% if option_value.price %} {{ option_value.price_prefix }} {{ option_value.price }} {% endif %}" class="img-thumbnail" /> {% endif %}
+                  {{ option_value.name }}
+                  {% if option_value.price %}
+                  ({{ option_value.price_prefix }}{{ option_value.price }})
+                  {% endif %} </label>
+              </div>
+              {% endfor %} </div>
+          </div>
+          {% endif %}
+          {% if option.type == 'checkbox' %}
+          <div class="form-group{% if option.required %} required {% endif %}">
+            <label class="control-label">{{ option.name }}</label>
+            <div id="input-option{{ option.product_option_id }}"> {% for option_value in option.product_option_value %}
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="data[{{ product.product_id }}][option][{{ option.product_option_id }}][]" value="{{ option_value.product_option_value_id }}" />
+                  {% if option_value.image %} <img src="{{ option_value.image }}" alt="{{ option_value.name }} {% if option_value.price %} {{ option_value.price_prefix }} {{ option_value.price }} {% endif %}" class="img-thumbnail" /> {% endif %}
+                  {{ option_value.name }}
+                  {% if option_value.price %}
+                  ({{ option_value.price_prefix }}{{ option_value.price }})
+                  {% endif %} </label>
+              </div>
+              {% endfor %} </div>
+          </div>
+          {% endif %}
+          {% if option.type == 'text' %}
+          <div class="form-group{% if option.required %} required {% endif %}">
+            <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
+            <input type="text" name="data[{{ product.product_id }}][option][{{ option.product_option_id }}]" value="{{ option.value }}" placeholder="{{ option.name }}" id="input-option{{ option.product_option_id }}" class="form-control" />
+          </div>
+          {% endif %}
+          {% if option.type == 'textarea' %}
+          <div class="form-group{% if option.required %} required {% endif %}">
+            <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
+            <textarea name="option[{{ option.product_option_id }}]" rows="5" placeholder="{{ option.name }}" id="input-option{{ option.product_option_id }}" class="form-control">{{ option.value }}</textarea>
+          </div>
+          {% endif %}
+
+          {% endfor %}
+          {% endif %}
+
+          </td>
+          <td>
+            <input type="text" name="data[{{ product.product_id }}][name][1]" id="{{ product.product_id }}-name-1" data-name="name" value="Name" />
+            <input type="text" name="data[{{ product.product_id }}][surname][1]" id="{{ product.product_id }}-surname-1" data-name="surname" value="Surname" />
+            <input type="text" name="data[{{ product.product_id }}][email]" id="{{ product.product_id }}-email" data-name="email" value="Email" />
+            <input type="text" name="data[{{ product.product_id }}][phone]" id="{{ product.product_id }}-phone" data-name="phone" value="Phone" />
+
+            <input type="text" name="data[{{ product.product_id }}][country]" id="{{ product.product_id }}-country" data-name="country" value="Country" />
+            <input type="text" name="data[{{ product.product_id }}][postcode]" id="{{ product.product_id }}-postcode" data-name="postcode" value="Postcode" />
+            <input type="text" name="data[{{ product.product_id }}][address]" id="{{ product.product_id }}-address" data-name="address" value="Address" />
+          </td>
+  			<td><a class="addCF" href="javascript:void(0);">+ PLUS</a></td>
+  		</tr>
+
+  	</tbody>
+  </table>
+
+{% endfor %}
+</div>
+<button type="submit" form="form-option" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+</form>
+
+<script>
+  $(function() {
+    var count=1;
+      $(".addCF").click(function(){
+       var product_id = $(this).closest('.table').find('.prodid').val();
+       // var data_name = $(this).closest('.table').find('#' + product_id + '-name');
+       // var data_name = $(this).attr( 'data', 'name' );
+
+       // console.log(data_name);
+       var clone = $(this).closest('tr').clone(true);
+       $("td:first-child", clone).empty();
+       $("td:last-child", clone).html('<a href="javascript:void(0);" class="remCF">Remove</a>');
+       var lastcount = count;
+        count++;
+        clone.find('input[data-name="name"]').attr('id',product_id + '-name-' + count );
+        clone.find('input[data-name="name"]').attr('name','data[' + product_id + '][' + count + '][name]' );
+        clone.find('input[data-name="surname"]').attr('id',product_id + '-surname-' + count );
+        clone.find('input[data-name="surname"]').attr('name','data[' + product_id + '][' + count + '][surname]' );
+        // clone.find('input[data-name="surname"]').attr('id',product_id + '-surname-' + count );
+       // clone.find('input').attr('name','data[' + product_id + ']' + count + '[surname]');
+       // clone.find('input').attr('name','data[' + product_id + ']' + count + '[email]');
+       // clone.find('input').attr('name','data[' + product_id + ']' + count + '[phone]');
+       clone.insertAfter( $(this).closest('tr'));
+      });
+      $("table.table").on('click','.remCF',function(){
+          $(this).parent().parent().remove();
+      });
+  });
+</script>
+
+
+
+
+</div>
+{{ footer }}
