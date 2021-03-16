@@ -2,13 +2,15 @@
 class ControllerProductDropshipperform extends Controller {
 	public function index() {
 
-		var_dump($this->request->post);
-
 		$this->load->language('product/allproduct');
 
 		$this->load->model('catalog/product');
 
 		$this->load->model('tool/image');
+
+		$this->load->model('localisation/country');
+
+		$data['countries'] = $this->model_localisation_country->getCountries();
 
 		if (isset($this->request->get['filter'])) {
 			$filter = $this->request->get['filter'];

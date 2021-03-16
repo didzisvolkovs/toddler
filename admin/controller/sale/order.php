@@ -918,31 +918,31 @@ class ControllerSaleOrder extends Controller {
 			 	$data['config_gift'] = $this->config->get('config_gift');
 			 }
 
-			 if ($order_info['discount_type']== '1') {
-			 	$data['discount_type'] = '1';
-			 } else {
-			 	$data['discount_type'] = '0';
-			 }
+			 // if ($order_info['discount_type']== '1') {
+			 // 	$data['discount_type'] = '1';
+			 // } else {
+			 // 	$data['discount_type'] = '0';
+			 // }
 
-			 $data['config_currency'] = $this->config->get('config_currency');
-
-			$this->load->model('catalog/product');
-			$gift_info = $this->model_sale_order->getGifts($order_id);
-
-
-
-			foreach ($gift_info as $gifts) {
-				$prod = $this->model_catalog_product->getProduct($gifts['product_id']);
-				$manufacturers = $this->model_catalog_manufacturer->getManufacturer($prod['manufacturer_id']);
-
-
-				$data['gifts'][] = array(
-					'gift_id'    => $gifts['gift_id'],
-					'product_id'    => $gifts['product_id'],
-					'product_name'    => $prod['model'],
-					'manufacturers_name'  => $manufacturers['name'],
-				);
-			}
+			//  $data['config_currency'] = $this->config->get('config_currency');
+			//
+			// $this->load->model('catalog/product');
+			// $gift_info = $this->model_sale_order->getGifts($order_id);
+			//
+			//
+			//
+			// foreach ($gift_info as $gifts) {
+			// 	$prod = $this->model_catalog_product->getProduct($gifts['product_id']);
+			// 	$manufacturers = $this->model_catalog_manufacturer->getManufacturer($prod['manufacturer_id']);
+			//
+			//
+			// 	$data['gifts'][] = array(
+			// 		'gift_id'    => $gifts['gift_id'],
+			// 		'product_id'    => $gifts['product_id'],
+			// 		'product_name'    => $prod['model'],
+			// 		'manufacturers_name'  => $manufacturers['name'],
+			// 	);
+			// }
 
 
 
@@ -1035,15 +1035,49 @@ class ControllerSaleOrder extends Controller {
 
 			// Uploaded files
 			$this->load->model('tool/upload');
+			$this->load->model('localisation/country');
+			$this->load->model('localisation/tax_rate');
 
 			$data['products'] = array();
 
 			$products = $this->model_sale_order->getOrderProducts($this->request->get['order_id']);
 
 			foreach ($products as $product) {
+				$dropshipper_option_data = array();
+
+				$dropshipper_options = $this->model_sale_order->getOrderDropshipperOptions($this->request->get['order_id'], $product['order_product_id']);
+
+				if($dropshipper_options){
+					$data['dropshipper'] = 1;
+					foreach($dropshipper_options as $dropshipper_option){
+						$country = $this->model_localisation_country->getCountry($dropshipper_option['shipping_country']);
+
+						  $tax = $this->model_localisation_tax_rate->setShippingAddress($country['country_id']);
+
+						 // $tax = $this->model_localisation_zone->getZonesByCountryId($dropshipper_option['shipping_country']);
+
+						$dropshipper_option_data[] = array(
+							'name' => $dropshipper_option['shipping_firstname'],
+							'lastname' => $dropshipper_option['shipping_lastname'],
+							'email' => $dropshipper_option['shipping_email'],
+							'phone' => $dropshipper_option['shipping_phone'],
+							'address' => $dropshipper_option['shipping_address_1'],
+							'postcode' => $dropshipper_option['shipping_postcode'],
+							'country' => $country['name'],
+							'tax' => $tax
+						);
+					}
+				}
+				else{
+					$data['dropshipper'] = 0;
+				}
+
+				// var_dump($dropshipper_option_data);
+
 				$option_data = array();
 
 				$options = $this->model_sale_order->getOrderOptions($this->request->get['order_id'], $product['order_product_id']);
+
 
 				foreach ($options as $option) {
 					if ($option['type'] != 'file') {
@@ -1066,12 +1100,15 @@ class ControllerSaleOrder extends Controller {
 					}
 				}
 
+
+
 				$data['products'][] = array(
 					'order_product_id' => $product['order_product_id'],
 					'product_id'       => $product['product_id'],
 					'name'    	 	   => $product['name'],
 					'model'    		   => $product['model'],
 					'option'   		   => $option_data,
+					'dropshipper_option'  => $dropshipper_option_data,
 					'quantity'		   => $product['quantity'],
 					'price'    		   => $this->currency->format($product['price'] + ($this->config->get('config_tax') ? $product['tax'] : 0), $order_info['currency_code'], $order_info['currency_value']),
 					'total'    		   => $this->currency->format($product['total'] + ($this->config->get('config_tax') ? ($product['tax'] * $product['quantity']) : 0), $order_info['currency_code'], $order_info['currency_value']),

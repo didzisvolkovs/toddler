@@ -163,6 +163,31 @@ class Cart {
 					}
 				}
 
+				$dropshipper_option_data = array();
+
+
+				$dropshipper_option = (json_decode($cart['dropshipper_option'], true));
+
+				if(!empty($dropshipper_option)){
+				 // var_dump($tests);
+				// foreach (json_decode($cart['dropshipper_option']) as $value) {
+				// 	 var_dump($value);
+				// 	die();
+				 	  $dropshipper_option_data[] = array(
+							'name'      	 => $dropshipper_option['name'],
+							'lastname' 		 => $dropshipper_option['lastname'],
+							'email'        => $dropshipper_option['email'],
+							'phone'        => $dropshipper_option['phone'],
+							'country'      => $dropshipper_option['country'],
+							'postcode'     => $dropshipper_option['postcode'],
+							'address'      => $dropshipper_option['address']
+				 	 	);
+					}
+				  // }
+					//
+				    // var_dump($dropshipper_option_data);
+				    // die();
+
 				// $price = $product_query->row['price'];
 				$price = $product_query->row['price'] + $product_query->rows['0']['price'];
 
@@ -245,6 +270,7 @@ class Cart {
 					'shipping'        => $product_query->row['shipping'],
 					'image'           => $product_query->row['image'],
 					'option'          => $option_data,
+					'dropshipper_option'  => 	$dropshipper_option_data,
 					'download'        => $download_data,
 					'quantity'        => $cart['quantity'],
 					'minimum'         => $product_query->row['minimum'],
@@ -271,11 +297,11 @@ class Cart {
 		return $product_data;
 	}
 
-	public function add($product_id, $quantity = 1, $option = array(), $recurring_id = 0) {
+	public function add($product_id, $quantity = 1, $option = array(), $recurring_id = 0, $dropshipper_option = array()) {
 		$query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "cart WHERE api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "' AND product_id = '" . (int)$product_id . "' AND recurring_id = '" . (int)$recurring_id . "' AND `option` = '" . $this->db->escape(json_encode($option)) . "'");
 
 		if (!$query->row['total']) {
-			$this->db->query("INSERT " . DB_PREFIX . "cart SET api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "', customer_id = '" . (int)$this->customer->getId() . "', session_id = '" . $this->db->escape($this->session->getId()) . "', product_id = '" . (int)$product_id . "', recurring_id = '" . (int)$recurring_id . "', `option` = '" . $this->db->escape(json_encode($option)) . "', quantity = '" . (int)$quantity . "', date_added = NOW()");
+			$this->db->query("INSERT " . DB_PREFIX . "cart SET api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "', customer_id = '" . (int)$this->customer->getId() . "', session_id = '" . $this->db->escape($this->session->getId()) . "', product_id = '" . (int)$product_id . "', recurring_id = '" . (int)$recurring_id . "', `option` = '" . $this->db->escape(json_encode($option)) . "', `dropshipper_option` = '" . $this->db->escape(json_encode($dropshipper_option)) . "', quantity = '" . (int)$quantity . "', date_added = NOW()");
 		} else {
 			$this->db->query("UPDATE " . DB_PREFIX . "cart SET quantity = (quantity + " . (int)$quantity . ") WHERE api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "' AND product_id = '" . (int)$product_id . "' AND recurring_id = '" . (int)$recurring_id . "' AND `option` = '" . $this->db->escape(json_encode($option)) . "'");
 		}

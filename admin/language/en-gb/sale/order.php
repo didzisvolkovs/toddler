@@ -61,6 +61,14 @@ $_['text_restock']               = 'Success: Products have been restocked!';
 $_['text_upload']                = 'Your file was successfully uploaded!';
 $_['text_picklist']              = 'Dispatch Note';
 
+$_['text_shipping_name']         = 'Name';
+$_['text_shipping_last_name']    = 'Last Name';
+$_['text_shipping_email']        = 'Email';
+$_['text_shipping_phone']        = 'Phone';
+$_['text_shipping_address']      = 'Address';
+$_['text_shipping_postcode']     = 'Postcode';
+$_['text_shipping_country']      = 'Country';
+
 // Column
 $_['column_order_id']            = 'Order ID';
 $_['column_customer']            = 'Customer';

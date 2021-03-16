@@ -47,7 +47,7 @@ class ModelSaleOrder extends Model {
 			foreach ($order_product_query->rows as $product) {
 				$reward += $product['reward'];
 			}
-			
+
 			$this->load->model('customer/customer');
 
 			$affiliate_info = $this->model_customer_customer->getCustomer($order_query->row['affiliate_id']);
@@ -238,6 +238,12 @@ class ModelSaleOrder extends Model {
 		return $query->rows;
 	}
 
+	public function getOrderDropshipperOptions($order_id, $order_product_id) {
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "dropshipper_order WHERE order_id = '" . (int)$order_id . "' AND order_product_id = '" . (int)$order_product_id . "'");
+
+		return $query->rows;
+	}
+
 	public function getOrderVouchers($order_id) {
 		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "order_voucher WHERE order_id = '" . (int)$order_id . "'");
 
@@ -255,7 +261,7 @@ class ModelSaleOrder extends Model {
 
 		return $query->rows;
 	}
-	
+
 	public function getTotalOrders($data = array()) {
 		$sql = "SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "order`";
 
@@ -361,7 +367,7 @@ class ModelSaleOrder extends Model {
 
 		return $query->row['total'];
 	}
-	
+
 	public function getTotalSales($data = array()) {
 		$sql = "SELECT SUM(total) AS total FROM `" . DB_PREFIX . "order`";
 
@@ -407,7 +413,7 @@ class ModelSaleOrder extends Model {
 
 		return $query->row['total'];
 	}
-	
+
 	public function createInvoiceNo($order_id) {
 		$order_info = $this->getOrder($order_id);
 
@@ -451,7 +457,7 @@ class ModelSaleOrder extends Model {
 
 		return $query->row['total'];
 	}
-	
+
 	public function getEmailsByProductsOrdered($products, $start, $end) {
 		$implode = array();
 

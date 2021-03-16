@@ -17,28 +17,28 @@
 	<tbody>
       {% for product in products %}
         <tr {% if not product.stock %} class="warning" {% endif %}>
-          <td class="image">{% if product.thumb %} 
+          <td class="image">{% if product.thumb %}
             <a href="{{ product.href }}"><img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" /></a>
             {% endif %}</td>
           <td class="name"><a href="{{ product.href }}">{{ product.name }}</a> {% if not product.stock %} <span class="text-danger">***</span> {% endif %}
             <div>
-              {% for option in product.option %} 
+              {% for option in product.option %}
               <small>{{ option.name }}: {{ option.value }}</small><br />
 			  {% endfor %}
-			  {% if product.reward %} 
+			  {% if product.reward %}
 			  <br />
 			  <small>{{ product.reward }}</small>
 			  {% endif %}
-			  {% if product.recurring %} 
+			  {% if product.recurring %}
 			  <br />
 			  <span class="label label-info">{{ text_recurring_item }}</span> <small>{{ product.recurring }}</small>
 			  {% endif %}
             </div></td>
-          <td class="quantity">{% if edit_cart %} 
+          <td class="quantity">{% if edit_cart %}
 		    <div class="input-group input-group-sm">
 				<span class="input-group-btn">
 					<button class="btn btn-primary button-update" data-type="decrease" data-product="{{ product.key }}">-</button>
-				</span>            
+				</span>
 				<input type="text" data-mask="9?999999999999999" value="{{ product.quantity }}" class="qc-product-qantity form-control text-center" name="quantity[{{ product.key }}]">
 				<span class="input-group-btn">
 					<button class="btn btn-primary button-update" data-type="increase" data-product="{{ product.key }}">+</button>
@@ -46,13 +46,13 @@
 				</span>
 			</div>
 			{% else %}
-			x&nbsp;{{ product.quantity }} 
+			x&nbsp;{{ product.quantity }}
 			{% endif %}</td>
 		  <td class="price1 hidden-xs">{{ product.price }}</td>
           <td class="total hidden-xs">{{ product.total }}</td>
         </tr>
         {% endfor %}
-        {% for voucher in vouchers %} 
+        {% for voucher in vouchers %}
         <tr>
           <td class="image"></td>
           <td class="name">{{ voucher.description }}</td>
@@ -60,7 +60,7 @@
 		  <td class="price1">{{ voucher.amount }}</td>
           <td class="total">{{ voucher.amount }}</td>
         </tr>
-        {% endfor %} 
+        {% endfor %}
 	</tbody>
   {% endif %}
 </table>
@@ -70,4 +70,4 @@
 	  <div class="text-right"><b>{{ total.title }}:</b> <span>{{ total.text }}</span></div>
 	</div>
     {% endfor %}
-</div> 
+</div>

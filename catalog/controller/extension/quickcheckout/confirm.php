@@ -1,8 +1,8 @@
-<?php 
-class ControllerExtensionQuickCheckoutConfirm extends Controller { 
+<?php
+class ControllerExtensionQuickCheckoutConfirm extends Controller {
 	public function index() {
 		$redirect = '';
-		
+
 		if ($this->cart->hasShipping()) {
 			// Validate if shipping address has been set.
 			if (!isset($this->session->data['shipping_address'])) {
@@ -18,7 +18,7 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 			unset($this->session->data['shipping_method']);
 			unset($this->session->data['shipping_methods']);
 		}
-		
+
 		// Validate if payment address has been set.
 		if (!isset($this->session->data['payment_address'])) {
 			$redirect = $this->url->link('checkout/checkout', '', true);
@@ -33,7 +33,7 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 		if ((!$this->cart->hasProducts() && empty($this->session->data['vouchers'])) || (!$this->cart->hasStock() && !$this->config->get('config_stock_checkout'))) {
 			$redirect = $this->url->link('checkout/cart');
 		}
-		
+
 		// Validate minimum quantity requirements.
 		$products = $this->cart->getProducts();
 
@@ -52,14 +52,14 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 				break;
 			}
 		}
-		
+
 		if (!$redirect) {
 			$order_data = array();
 
 			$order_data['totals'] = array();
 			$total = 0;
 			$taxes = $this->cart->getTaxes();
-		
+
 			$total_data = array(
 				'totals' => &$totals,
 				'taxes'  => &$taxes,
@@ -85,7 +85,7 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 					$this->{'model_extension_total_' . $result['code']}->getTotal($total_data);
 				}
 			}
-			
+
 			$order_data['totals'] = $totals;
 
 			$sort_order = array();
@@ -243,11 +243,45 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 					);
 				}
 
+				$dropshipper_option_data = array();
+				$this->session->data['do'] = $product['dropshipper_option'];
+
+				foreach ($product['dropshipper_option'] as $dropshipper_option) {
+					$dropshipper_option_data[] = array(
+						'name'      	 => $dropshipper_option['name'],
+						'lastname' 		 => $dropshipper_option['lastname'],
+						'email'        => $dropshipper_option['email'],
+						'phone'        => $dropshipper_option['phone'],
+						'country'      => $dropshipper_option['country'],
+						'postcode'     => $dropshipper_option['postcode'],
+						'address'      => $dropshipper_option['address']
+					);
+				}
+
+// 				$dropshipper_option_data = array();
+//
+ // $this->session->data['do'] = $dropshipper_option_data;
+//
+// 				foreach ($product['dropshipper_option'] as $dropshipper_option) {
+// 					$dropshipper_option_data[] = array(
+// 						'name'       => $dropshipper_option['name'],
+// 						'lastname'       => $dropshipper_option['lastname'],
+// 						'email'       => $dropshipper_option['email'],
+// 						'phone'       => $dropshipper_option['phone'],
+// 						'country'       => $dropshipper_option['country'],
+// 						'postcode'       => $dropshipper_option['postcode'],
+// 						'address'       => $dropshipper_option['address'],
+//
+// 					);
+// 				}
+
+
 				$order_data['products'][] = array(
 					'product_id' => $product['product_id'],
 					'name'       => $product['name'],
 					'model'      => $product['model'],
 					'option'     => $option_data,
+					'dropshipper_option'     => $dropshipper_option_data,
 					'download'   => $product['download'],
 					'quantity'   => $product['quantity'],
 					'subtract'   => $product['subtract'],
@@ -276,36 +310,36 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 					);
 				}
 			}
-			
-			if (!isset($this->session->data['order_comment'])) { 
+
+			if (!isset($this->session->data['order_comment'])) {
 				$this->session->data['order_comment'] = '';
 			}
-			
-			if (!isset($this->session->data['survey'])) { 
+
+			if (!isset($this->session->data['survey'])) {
 				$this->session->data['survey'] = '';
 			}
-			
+
 			if (!isset($this->session->data['delivery_date'])) {
 				$this->session->data['delivery_date'] = '';
 			}
-			
+
 			if (!isset($this->session->data['delivery_time'])) {
 				$this->session->data['delivery_time'] = '';
 			}
-			
+
 			$this->session->data['comment'] = '';
-			
+
 			if ($this->session->data['order_comment'] != '') {
 				$this->session->data['comment'] .= $this->language->get('text_order_comments') . ' ' . $this->session->data['order_comment'];
 			}
-			
+
 			if ($this->session->data['survey'] != '') {
 				$this->session->data['comment'] .= "\n\n" . $this->language->get('text_survey') . ' ' . $this->session->data['survey'];
 			}
-			
+
 			if ($this->session->data['delivery_date'] != '') {
 				$this->session->data['comment'] .= "\n\n" . $this->language->get('text_delivery') . ' ' . $this->session->data['delivery_date'];
-				
+
 				if ($this->session->data['delivery_time'] != '') {
 					$this->session->data['comment'] .= ' ' . $this->session->data['delivery_time'];
 				}
@@ -350,11 +384,11 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 			}
 
 			$order_data['language_id'] = $this->config->get('config_language_id');
-			
+
 			$order_data['currency_id'] = $this->currency->getId($this->session->data['currency']);
 			$order_data['currency_code'] = $this->session->data['currency'];
 			$order_data['currency_value'] = $this->currency->getValue($this->session->data['currency']);
-			
+
 			$order_data['ip'] = $this->request->server['REMOTE_ADDR'];
 
 			if (!empty($this->request->server['HTTP_X_FORWARDED_FOR'])) {
@@ -437,7 +471,7 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 						$recurring .= sprintf($this->language->get('text_payment_cancel'), $this->currency->format($this->tax->calculate($product['recurring']['price'] * $product['quantity'], $product['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']), $product['recurring']['cycle'], $frequencies[$product['recurring']['frequency']], $product['recurring']['duration']);
 					}
 				}
-				
+
 				$price = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
 				$total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);
 
@@ -473,7 +507,7 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 
 			foreach ($order_data['totals'] as $total) {
 				$text = $this->currency->format($total['value'], $this->session->data['currency']);
-				
+
 				$data['totals'][] = array(
 					'title' => $total['title'],
 					'text'  => $text,
@@ -491,7 +525,7 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 		$data['button_back'] = $this->language->get('button_back');
 		$data['payment_target'] = html_entity_decode($this->config->get('quickcheckout_payment_target'), ENT_QUOTES);
 		$data['back'] = $this->url->link('extension/quickcheckout/checkout', '', true);
-		
+
 		$this->response->setOutput($this->load->view('extension/quickcheckout/confirm', $data));
   	}
 }

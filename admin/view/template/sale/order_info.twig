@@ -39,7 +39,7 @@
             </tr>
             {% endif %}
               </tbody>
-            
+
           </table>
         </div>
       </div>
@@ -146,26 +146,48 @@
             <tr>
               <td class="text-left">{{ column_product }}</td>
               <td class="text-left">{{ column_model }}</td>
+              {% if dropshipper == 1 %}
+              <td class="text-left">Shipping</td>
+              {% endif %}
               <td class="text-right">{{ column_quantity }}</td>
               <td class="text-right">{{ column_price }}</td>
               <td class="text-right">{{ column_total }}</td>
             </tr>
           </thead>
           <tbody>
-          
+
           {% for product in products %}
+
           <tr>
             <td class="text-left"><a href="{{ product.href }}">{{ product.name }}</a> {% for option in product.option %} <br />
               {% if option.type != 'file' %}
               &nbsp;<small> - {{ option.name }}: {{ option.value }}</small> {% else %}
               &nbsp;<small> - {{ option.name }}: <a href="{{ option.href }}">{{ option.value }}</a></small> {% endif %}
               {% endfor %}</td>
+
             <td class="text-left">{{ product.model }}</td>
+            {% if dropshipper == 1 %}
+            <td class="text-left">
+            {% for dropshipper_option in product.dropshipper_option %}
+                    <table>
+                      <tr><td>{{ text_shipping_name }}:</td><td>{{ dropshipper_option.name }}</td></tr>
+                      <tr><td>{{ text_shipping_last_name }}:</td><td>{{ dropshipper_option.lastname }}</td></tr>
+                      <tr><td>{{ text_shipping_email }}:</td><td>{{ dropshipper_option.email }}</td></tr>
+                      <tr><td>{{ text_shipping_phone }}:</td><td>{{ dropshipper_option.phone }}</td></tr>
+                      <tr><td>{{ text_shipping_address }}:</td><td>{{ dropshipper_option.address }}</td></tr>
+                      <tr><td>{{ text_shipping_postcode }}:</td><td>{{ dropshipper_option.postcode }}</td></tr>
+                      <tr><td>{{ text_shipping_country }}:</td><td>{{ dropshipper_option.country }}</td></tr>
+                      <tr><td>tax:</td><td>{{ dropshipper_option.tax }}</td></tr>
+                    </table>
+            {% endfor %}
+            </td>
+            {% endif %}
             <td class="text-right">{{ product.quantity }}</td>
             <td class="text-right">{{ product.price }}</td>
             <td class="text-right">{{ product.total }}</td>
           </tr>
           {% endfor %}
+
           {% for voucher in vouchers %}
           <tr>
             <td class="text-left"><a href="{{ voucher.href }}">{{ voucher.description }}</a></td>
@@ -177,12 +199,12 @@
           {% endfor %}
           {% for total in totals %}
           <tr>
-            <td colspan="4" class="text-right">{{ total.title }}</td>
+        <td colspan="{% if dropshipper == 1 %}5{% else %}4{% endif %}" class="text-right">{{ total.title }}</td>
             <td class="text-right">{{ total.text }}</td>
           </tr>
           {% endfor %}
             </tbody>
-          
+
         </table>
         {% if comment %}
         <table class="table table-bordered">
@@ -222,25 +244,25 @@
                   <label class="col-sm-2 control-label" for="input-order-status">{{ entry_order_status }}</label>
                   <div class="col-sm-10">
                     <select name="order_status_id" id="input-order-status" class="form-control">
-                      
-                      
+
+
                       {% for order_statuses in order_statuses %}
                       {% if order_statuses.order_status_id == order_status_id %}
-                      
-                      
+
+
                       <option value="{{ order_statuses.order_status_id }}" selected="selected">{{ order_statuses.name }}</option>
-                      
-                      
+
+
                       {% else %}
-                      
-                      
+
+
                       <option value="{{ order_statuses.order_status_id }}">{{ order_statuses.name }}</option>
-                      
-                      
+
+
                       {% endif %}
                       {% endfor %}
-                    
-                    
+
+
                     </select>
                   </div>
                 </div>
@@ -281,7 +303,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                
+
                 {% for custom_field in account_custom_fields %}
                 <tr>
                   <td>{{ custom_field.name }}</td>
@@ -289,7 +311,7 @@
                 </tr>
                 {% endfor %}
                   </tbody>
-                
+
               </table>
             </div>
             {% endif %}
@@ -302,7 +324,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                
+
                 {% for custom_field in payment_custom_fields %}
                 <tr>
                   <td>{{ custom_field.name }}</td>
@@ -310,7 +332,7 @@
                 </tr>
                 {% endfor %}
                   </tbody>
-                
+
               </table>
             </div>
             {% endif %}
@@ -323,7 +345,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                
+
                 {% for custom_field in shipping_custom_fields %}
                 <tr>
                   <td>{{ custom_field.name }}</td>
@@ -331,7 +353,7 @@
                 </tr>
                 {% endfor %}
                   </tbody>
-                
+
               </table>
             </div>
             {% endif %}
@@ -362,7 +384,7 @@
                   <td>{{ accept_language }}</td>
                 </tr>
                   </tbody>
-                
+
               </table>
             </div>
           </div>
@@ -630,6 +652,6 @@ $(document).ready(function() {
 $('select[name="order_status_id"]').change(function(){
   changeStatus();
 });
-//--></script> 
+//--></script>
 </div>
-{{ footer }} 
+{{ footer }}

@@ -113,7 +113,7 @@ class ControllerCheckoutConfirm extends Controller {
 					$order_data['store_url'] = HTTP_SERVER;
 				}
 			}
-			
+
 			$this->load->model('account/customer');
 
 			if ($this->customer->isLogged()) {
@@ -223,11 +223,28 @@ class ControllerCheckoutConfirm extends Controller {
 					);
 				}
 
+				$dropshipper_option_data = array();
+
+				foreach ($product['dropshipper_option'] as $dropshipper_option) {
+					$dropshipper_option_data[] = array(
+						'name'       => $dropshipper_option['name'],
+						'lastname'       => $dropshipper_option['lastname'],
+						'email'       => $dropshipper_option['email'],
+						'phone'       => $dropshipper_option['phone'],
+						'country'       => $dropshipper_option['country'],
+						'postcode'       => $dropshipper_option['postcode'],
+						'address'       => $dropshipper_option['address'],
+
+					);
+				}
+
+
 				$order_data['products'][] = array(
 					'product_id' => $product['product_id'],
 					'name'       => $product['name'],
 					'model'      => $product['model'],
 					'option'     => $option_data,
+					'dropshipper_option'     => $dropshipper_option_data,
 					'download'   => $product['download'],
 					'quantity'   => $product['quantity'],
 					'subtract'   => $product['subtract'],
@@ -320,6 +337,7 @@ class ControllerCheckoutConfirm extends Controller {
 			}
 
 			$this->load->model('checkout/order');
+
 
 			$this->session->data['order_id'] = $this->model_checkout_order->addOrder($order_data);
 
