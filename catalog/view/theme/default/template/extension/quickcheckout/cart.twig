@@ -8,15 +8,23 @@
 	<tr>
 	  <td class="image">{{ column_image }}</td>
 	  <td class="name">{{ column_name }}</td>
+		{% if dropshipper == 1 %}
+		<td>{{ column_shipping }}</td>
+		{% else %}
 	  <td class="quantity">{{ column_quantity }}</td>
+		{% endif %}
 	  <td class="price1 hidden-xs">{{ column_price }}</td>
+		{% if dropshipper == 1 %}
+		<td>{{ column_shipping }}</td>
+		<td>{{ column_tax }}</td>
+		{% endif %}
 	  <td class="total hidden-xs">{{ column_total }}</td>
 	</tr>
   </thead>
   {% if products or vouchers %}
 	<tbody>
       {% for product in products %}
-        <tr {% if not product.stock %} class="warning" {% endif %}>
+		<tr {% if not product.stock %} class="warning" {% endif %}>
           <td class="image">{% if product.thumb %}
             <a href="{{ product.href }}"><img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" /></a>
             {% endif %}</td>
@@ -34,22 +42,43 @@
 			  <span class="label label-info">{{ text_recurring_item }}</span> <small>{{ product.recurring }}</small>
 			  {% endif %}
             </div></td>
-          <td class="quantity">{% if edit_cart %}
-		    <div class="input-group input-group-sm">
-				<span class="input-group-btn">
-					<button class="btn btn-primary button-update" data-type="decrease" data-product="{{ product.key }}">-</button>
-				</span>
-				<input type="text" data-mask="9?999999999999999" value="{{ product.quantity }}" class="qc-product-qantity form-control text-center" name="quantity[{{ product.key }}]">
-				<span class="input-group-btn">
-					<button class="btn btn-primary button-update" data-type="increase" data-product="{{ product.key }}">+</button>
-					<button class="btn btn-danger button-remove" data-product="{{ product.key }}" data-remove="{{ product.key }}" title="{{ button_remove }}"><i class="glyph-icon icon-cancel">&#xe80f;</i></button>
-				</span>
-			</div>
-			{% else %}
-			x&nbsp;{{ product.quantity }}
-			{% endif %}</td>
+				{% if dropshipper == 1 %}
+						<td>
+										<table>
+											<tr><td>{{ text_shipping_name }}:</td><td>{{ product.dropshipper_option['name'] }}</td></tr>
+											<tr><td>{{ text_shipping_last_name }}:</td><td>{{ product.dropshipper_option['lastname'] }}</td></tr>
+											<tr><td>{{ text_shipping_email }}:</td><td>{{ product.dropshipper_option['email'] }}</td></tr>
+											<tr><td>{{ text_shipping_phone }}:</td><td>{{ product.dropshipper_option['phone'] }}</td></tr>
+											<tr><td>{{ text_shipping_address }}:</td><td>{{ product.dropshipper_option['address'] }}</td></tr>
+											<tr><td>{{ text_shipping_postcode }}:</td><td>{{ product.dropshipper_option['postcode'] }}</td></tr>
+											<tr><td>{{ text_shipping_country }}:</td><td>{{ product.dropshipper_option['country'] }}</td></tr>
+
+										</table>
+						</td>
+				{% else %}
+	        <td class="quantity">
+					{% if edit_cart %}
+						 <div class="input-group input-group-sm">
+							<span class="input-group-btn">
+								<button class="btn btn-primary button-update" data-type="decrease" data-product="{{ product.key }}">-</button>
+							</span>
+							<input type="text" data-mask="9?999999999999999" value="{{ product.quantity }}" class="qc-product-qantity form-control text-center" name="quantity[{{ product.key }}]">
+							<span class="input-group-btn">
+								<button class="btn btn-primary button-update" data-type="increase" data-product="{{ product.key }}">+</button>
+								<button class="btn btn-danger button-remove" data-product="{{ product.key }}" data-remove="{{ product.key }}" title="{{ button_remove }}"><i class="glyph-icon icon-cancel">&#xe80f;</i></button>
+							</span>
+						</div>
+				{% else %}
+				x&nbsp;{{ product.quantity }}
+				{% endif %}
+				</td>
+			{% endif %}
 		  <td class="price1 hidden-xs">{{ product.price }}</td>
-          <td class="total hidden-xs">{{ product.total }}</td>
+			{% if dropshipper == 1 %}
+				<td>{{ product.shipping }}</td>
+				<td>{{ product.tax }}</td>
+			{% endif %}
+			<td class="total hidden-xs">{{ product.total }}</td>
         </tr>
         {% endfor %}
         {% for voucher in vouchers %}
@@ -65,7 +94,7 @@
   {% endif %}
 </table>
 <div id="totals-wrap">
-	{% for total in totals %} 
+	{% for total in totals %}
 	<div class="total-wrap">
 	  <div class="text-right"><b>{{ total.title }}:</b> <span>{{ total.text }}</span></div>
 	</div>

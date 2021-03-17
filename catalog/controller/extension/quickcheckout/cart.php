@@ -1,4 +1,4 @@
-<?php 
+<?php
 class ControllerExtensionQuickCheckoutCart extends Controller {
 	public function index() {
 		$data = $this->load->language('checkout/checkout');
@@ -10,69 +10,70 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 				$data['error_warning_stock'] = $this->language->get('error_stock');
 			}
 		}
-		
+
 		// Totals
 		$this->load->model('setting/extension');
-		
-		$total_data = array();					
+
+		$total_data = array();
 		$total = 0;
 		$taxes = $this->cart->getTaxes();
-		
+
 		$total_data = array(
 			'totals' => &$totals,
 			'taxes'  => &$taxes,
 			'total'  => &$total
 		);
-		
+
 		// Display prices
 		$data['totals'] = array();
-		
+
 		if (($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) {
-			$sort_order = array(); 
-			
+			$sort_order = array();
+
 			$results = $this->model_setting_extension->getExtensions('total');
-			
+
 			foreach ($results as $key => $value) {
 				$sort_order[$key] = $this->config->get('total_' . $value['code'] . '_sort_order');
 			}
-			
+
 			array_multisort($sort_order, SORT_ASC, $results);
-			
+
 			foreach ($results as $result) {
 				if ($this->config->get('total_' . $result['code'] . '_status')) {
 					$this->load->model('extension/total/' . $result['code']);
-		
+
 					$this->{'model_extension_total_' . $result['code']}->getTotal($total_data);
 				}
 			}
-			
+
 			$total_data = $totals;
-				
-			$sort_order = array(); 
-		  
+
+			$sort_order = array();
+
 			foreach ($total_data as $key => $value) {
 				$sort_order[$key] = $value['sort_order'];
 			}
 
 			array_multisort($sort_order, SORT_ASC, $total_data);
-			
+
 			foreach ($total_data as $total) {
 				$text = $this->currency->format($total['value'], $this->session->data['currency']);
-				
+
 				$data['totals'][] = array(
 					'title' => $total['title'],
 					'text'  => $text
 				);
 			}
 		}
-		
+
 		$this->load->model('tool/image');
 		$this->load->model('tool/upload');
-		
+
 		$data['products'] = array();
-		
+
 		$products = $this->cart->getProducts();
-			
+
+
 		foreach ($products as $product) {
 			$product_total = 0;
 
@@ -85,6 +86,7 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 			if ($product['minimum'] > $product_total) {
 				$data['error_warning'] = sprintf($this->language->get('error_minimum'), $product['name'], $product['minimum']);
 			}
+
 
 			$option_data = array();
 
@@ -107,12 +109,52 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 				);
 			}
 
+			$this->load->model('localisation/country');
+			$this->load->model('localisation/tax_rate');
+			$dropshipper_option_data = array();
+			if($product['dropshipper_option']){
+				$data['dropshipper'] = 1;
+				foreach($product['dropshipper_option'] as $dropshipper_option) {
+
+					$country = $this->model_localisation_country->getCountry($dropshipper_option['country']);
+					$tax_rate = $this->model_localisation_tax_rate->setShippingAddress($country['country_id']);
+
+					$dropshipper_option_data = array(
+						'name' => $dropshipper_option['name'],
+						'lastname' => $dropshipper_option['lastname'],
+						'email' => $dropshipper_option['email'],
+						'phone' => $dropshipper_option['phone'],
+						'country' => $country['name'],
+						'postcode' => $dropshipper_option['postcode'],
+						'address' => $dropshipper_option['address'],
+						// 'tax' => $product['tax']
+					);
+					$product['shipping'] = $country['shipping'];
+
+					if($tax_rate){
+						 $product['tax'] = (int)$product['price'] * ((int)$tax_rate['rate'] / 100);
+					}
+					else{
+						$product['tax'] = '0.00';
+					}
+
+					// var_dump($dropshipper_option);
+				}
+			}
+			else{
+				$data['dropshipper'] = 0;
+				$product['tax'] = '0.00';
+				// $tax = 0;
+			}
+
+			// var_dump($tax);
+
 			if ($product['image']) {
 				$image = $this->model_tool_image->resize($product['image'], $this->config->get('theme_' . $this->config->get('config_theme') . '_image_cart_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_cart_height'));
 			} else {
 				$image = '';
 			}
-			
+
 			// Display prices
 			if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
 				$price = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
@@ -122,7 +164,7 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 
 			// Display prices
 			if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
-				$total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);
+				$total = $this->currency->format($this->tax->calculate($product['price'] + $product['tax'] + $product['shipping'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);
 			} else {
 				$total = false;
 			}
@@ -137,7 +179,7 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 					'month'      => $this->language->get('text_month'),
 					'year'       => $this->language->get('text_year'),
 				);
-				
+
 				if ($product['recurring']['trial']) {
 					$recurring = sprintf($this->language->get('text_trial_description'), $this->currency->format($this->tax->calculate($product['recurring']['trial_price'] * $product['quantity'], $product['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']), $product['recurring']['trial_cycle'], $frequencies[$product['recurring']['trial_frequency']], $product['recurring']['trial_duration']) . ' ';
 				}
@@ -155,6 +197,9 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 				'name'      => $product['name'],
 				'model'     => $product['model'],
 				'option'    => $option_data,
+				'dropshipper_option'    => $dropshipper_option_data,
+				'tax'    => $product['tax'],
+				'shipping'    => $product['shipping'],
 				'recurring' => $recurring,
 				'quantity'  => $product['quantity'],
 				'stock'     => $product['stock'] ? true : !(!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning')),
@@ -164,7 +209,7 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 				'href'      => $this->url->link('product/product', 'product_id=' . $product['product_id'])
 			);
 		}
-		
+
 		// Gift Voucher
 		$data['vouchers'] = array();
 
@@ -178,26 +223,26 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 				);
 			}
 		}
-		
+
 		// All variables
 		$data['edit_cart'] = $this->config->get('quickcheckout_edit_cart');
-	
+
 		$this->response->setOutput($this->load->view('extension/quickcheckout/cart', $data));
 	}
-	
+
 	public function update() {
 		$this->load->language('extension/quickcheckout/checkout');
 		$json = array();
-		
+
 		if (!empty($this->request->post['quantity'])) {
 			foreach ($this->request->post['quantity'] as $key => $value) {
 				$this->cart->update($key, $value);
 			}
 		}
-		
+
 		if (isset($this->request->get['remove'])) {
 			$this->cart->remove($this->request->get['remove']);
-			
+
 			unset($this->session->data['vouchers'][$this->request->get['remove']]);
 		}
 
@@ -210,24 +255,24 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
         } else {
             $json['error']['stock'] = '';
         }
-		
-		// Validate minimum quantity requirements.			
+
+		// Validate minimum quantity requirements.
 		$products = $this->cart->getProducts();
-				
+
 		foreach ($products as $product) {
 			$product_total = 0;
-				
+
 			foreach ($products as $product_2) {
 				if ($product_2['product_id'] == $product['product_id']) {
 					$product_total += $product_2['quantity'];
 				}
-			}		
-			
+			}
+
 			if ($product['minimum'] > $product_total) {
 				$data['error_warning_minimum'] = sprintf($this->language->get('error_minimum'), $product['name'], $product['minimum']);
 			} else {
 				$data['error_warning_minimum'] = '';
-			}				
+			}
 		}
 
 		if ($this->cart->getTotal() < $this->config->get('quickcheckout_minimum_order')) {
@@ -235,8 +280,8 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 		} elseif (isset($data['error_warning_minimum'])){
 			$json['error']['warning'] = $data['error_warning_minimum'];
 		}
-		
+
 		$this->response->addHeader('Content-Type: application/json');
-		$this->response->setOutput(json_encode($json));	
+		$this->response->setOutput(json_encode($json));
 	}
 }

@@ -324,6 +324,14 @@ class ControllerLocalisationCountry extends Controller {
 			$data['iso_code_3'] = '';
 		}
 
+		if (isset($this->request->post['shipping'])) {
+			$data['shipping'] = $this->request->post['shipping'];
+		} elseif (!empty($country_info)) {
+			$data['shipping'] = $country_info['shipping'];
+		} else {
+			$data['shipping'] = '';
+		}
+
 		if (isset($this->request->post['address_format'])) {
 			$data['address_format'] = $this->request->post['address_format'];
 		} elseif (!empty($country_info)) {
@@ -409,7 +417,7 @@ class ControllerLocalisationCountry extends Controller {
 
 		return !$this->error;
 	}
-	
+
 	public function country() {
 		$json = array();
 
@@ -434,5 +442,5 @@ class ControllerLocalisationCountry extends Controller {
 
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
-	}	
+	}
 }

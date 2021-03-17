@@ -423,6 +423,16 @@ class Cart {
 		return false;
 	}
 
+	public function hasShippingdropshipper() {
+		foreach ($this->getProducts() as $product) {
+			if (!$product['dropshipper_option']) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public function hasDownload() {
 		foreach ($this->getProducts() as $product) {
 			if ($product['download']) {

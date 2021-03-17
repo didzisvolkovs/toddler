@@ -16,6 +16,7 @@ $_['column_action']           = 'Action';
 
 // Entry
 $_['entry_name']              = 'Country Name';
+$_['entry_shipping']          = 'Shipping';
 $_['entry_iso_code_2']        = 'ISO Code (2)';
 $_['entry_iso_code_3']        = 'ISO Code (3)';
 $_['entry_address_format']    = 'Address Format';

@@ -34,6 +34,15 @@ $_['text_price']					 = 'Unit Price';
 $_['text_total']					 = 'Total';
 $_['text_points']					 = 'Reward Points: %s';
 
+
+$_['text_shipping_name']         = 'Name';
+$_['text_shipping_last_name']    = 'Last Name';
+$_['text_shipping_email']        = 'Email';
+$_['text_shipping_phone']        = 'Phone';
+$_['text_shipping_address']      = 'Address';
+$_['text_shipping_postcode']     = 'Postcode';
+$_['text_shipping_country']      = 'Country';
+
 // Column
 $_['column_image']                   = 'Image';
 $_['column_name']                    = 'Product Name';
@@ -41,6 +50,8 @@ $_['column_model']                   = 'Model';
 $_['column_quantity']                = 'Quantity';
 $_['column_price']                   = 'Price';
 $_['column_total']                   = 'Total';
+$_['column_tax']                   = 'Tax';
+$_['column_shipping']                   = 'Shipping';
 
 // Entry
 $_['entry_coupon']        		     = 'Enter your coupon here:';
@@ -56,7 +67,7 @@ $_['error_voucher']      		     = 'Warning: Gift Voucher is either invalid or th
 $_['error_survey']					 = 'Warning: Survey question is required to be answered!';
 $_['error_delivery']				 = 'Warning: Delivery date is required!';
 $_['error_maximum']      		     = 'Warning: The maximum number of points that can be applied is %s!';
-$_['error_reward']        		     = 'Warning: Please enter the amount of reward points to use!';	
+$_['error_reward']        		     = 'Warning: Please enter the amount of reward points to use!';
 $_['error_points']           		 = 'Warning: You don\'t have %s reward points!';
 $_['error_minimum_order']			 = 'Warning: You need a minimum order of %s before you can checkout.';
 $_['error_minimum']			 		 = 'Warning: Product minimum quantity not achieved';
