@@ -180,7 +180,8 @@ class Cart {
 							'phone'        => $dropshipper_option['phone'],
 							'country'      => $dropshipper_option['country'],
 							'postcode'     => $dropshipper_option['postcode'],
-							'address'      => $dropshipper_option['address']
+							'address'      => $dropshipper_option['address'],
+							'eutaxuser'      => $dropshipper_option['eutaxuser']
 				 	 	);
 					}
 				  // }
@@ -298,7 +299,7 @@ class Cart {
 	}
 
 	public function add($product_id, $quantity = 1, $option = array(), $recurring_id = 0, $dropshipper_option = array()) {
-		$query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "cart WHERE api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "' AND product_id = '" . (int)$product_id . "' AND recurring_id = '" . (int)$recurring_id . "' AND `option` = '" . $this->db->escape(json_encode($option)) . "'");
+		$query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "cart WHERE api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "' AND product_id = '" . (int)$product_id . "' AND recurring_id = '" . (int)$recurring_id . "' AND `option` = '" . $this->db->escape(json_encode($option)) . "' AND `dropshipper_option` = '" . $this->db->escape(json_encode($dropshipper_option)) . "'");
 
 		if (!$query->row['total']) {
 			$this->db->query("INSERT " . DB_PREFIX . "cart SET api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "', customer_id = '" . (int)$this->customer->getId() . "', session_id = '" . $this->db->escape($this->session->getId()) . "', product_id = '" . (int)$product_id . "', recurring_id = '" . (int)$recurring_id . "', `option` = '" . $this->db->escape(json_encode($option)) . "', `dropshipper_option` = '" . $this->db->escape(json_encode($dropshipper_option)) . "', quantity = '" . (int)$quantity . "', date_added = NOW()");

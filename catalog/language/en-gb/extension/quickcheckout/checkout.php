@@ -42,6 +42,7 @@ $_['text_shipping_phone']        = 'Phone';
 $_['text_shipping_address']      = 'Address';
 $_['text_shipping_postcode']     = 'Postcode';
 $_['text_shipping_country']      = 'Country';
+$_['text_shipping_eutaxuser']    = 'Eu TAX User';
 
 // Column
 $_['column_image']                   = 'Image';
@@ -50,8 +51,9 @@ $_['column_model']                   = 'Model';
 $_['column_quantity']                = 'Quantity';
 $_['column_price']                   = 'Price';
 $_['column_total']                   = 'Total';
-$_['column_tax']                   = 'Tax';
-$_['column_shipping']                   = 'Shipping';
+$_['column_tax']                     = 'Tax';
+$_['column_tax_rate']                = 'Tax Rate';
+$_['column_shipping']                = 'Shipping';
 
 // Entry
 $_['entry_coupon']        		     = 'Enter your coupon here:';

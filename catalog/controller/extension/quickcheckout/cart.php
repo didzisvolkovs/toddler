@@ -127,19 +127,30 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 						'country' => $country['name'],
 						'postcode' => $dropshipper_option['postcode'],
 						'address' => $dropshipper_option['address'],
+						'eutaxuser' => $dropshipper_option['eutaxuser']
 						// 'tax' => $product['tax']
 					);
 					$product['shipping'] = $country['shipping'];
 
+
 					if($tax_rate){
-						 $product['tax'] = (int)$product['price'] * ((int)$tax_rate['rate'] / 100);
+						$product_tax = 0;
+						if($dropshipper_option_data['eutaxuser'] == 1){
+							$product_tax = 0;
+						}
+						else{
+							$product_tax = ((float)$product['price'] * $product['quantity']) * ((int)$tax_rate['rate'] / 100);
+						}
+					  $product['tax'] = round(($country['shipping'] * ((int)$tax_rate['rate'] / 100)) + $product_tax, 2) ;
+					  $product['tax_rate'] = (int)$tax_rate['rate'].'%' ;
 					}
 					else{
 						$product['tax'] = '0.00';
+						$product['tax_rate'] = '';
 					}
 
-					// var_dump($dropshipper_option);
 				}
+
 			}
 			else{
 				$data['dropshipper'] = 0;
@@ -147,7 +158,6 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 				// $tax = 0;
 			}
 
-			// var_dump($tax);
 
 			if ($product['image']) {
 				$image = $this->model_tool_image->resize($product['image'], $this->config->get('theme_' . $this->config->get('config_theme') . '_image_cart_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_cart_height'));
@@ -164,7 +174,7 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 
 			// Display prices
 			if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
-				$total = $this->currency->format($this->tax->calculate($product['price'] + $product['tax'] + $product['shipping'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);
+				$total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'] + $product['tax'] + $product['shipping'], $this->session->data['currency']);
 			} else {
 				$total = false;
 			}
@@ -199,6 +209,7 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 				'option'    => $option_data,
 				'dropshipper_option'    => $dropshipper_option_data,
 				'tax'    => $product['tax'],
+				'tax_rate'    => $product['tax_rate'],
 				'shipping'    => $product['shipping'],
 				'recurring' => $recurring,
 				'quantity'  => $product['quantity'],

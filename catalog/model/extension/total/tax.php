@@ -15,9 +15,24 @@ class ModelExtensionTotalTax extends Model {
 
 					$country = $this->model_localisation_country->getCountry($dropshipper_option['country']);
 					$tax = $this->model_localisation_tax_rate->setShippingAddress($country['country_id']);
+					$product_tax = 0;
+					if($tax){
+						if($dropshipper_option['eutaxuser'] == 1){
+								$product_tax = 0;
+							}
+							else{
+								$product_tax = ((float)$product['price'] * $product['quantity']) * ((int)$tax['rate'] / 100);
+							}
+							$shipping_tax = $country['shipping'] * ((int)$tax['rate'] / 100);
+					}
+					else{
+						$shipping_tax = 0;
+					}
+					$price = $product_tax + $shipping_tax;
+
 					$tax_product[] = array(
 						'tax_class_id' => $tax['tax_class_id'],
-						'price' => $product['price'] * ($tax['rate'] / 100),
+						'price' => $price,
 						'name' => $tax['name'],
 						'rate' => $tax['rate'],
 						'tax_rate_id' => $tax['tax_rate_id']
@@ -34,7 +49,6 @@ class ModelExtensionTotalTax extends Model {
 		$raw = array();
 
 			if(isset($tax_product)){
-				$mainigais = 0;
 			 foreach($tax_product as $key => $val)
 			 {
 				 if(isset($raw['tax_total'][$val['tax_rate_id']])){

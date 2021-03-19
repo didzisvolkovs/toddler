@@ -298,6 +298,7 @@ class ControllerCheckoutCart extends Controller {
 												'country' => $data['country'],
 												'postcode' => $data['postcode'],
 												'address' => $data['address'],
+												'eutaxuser' => $data['eutaxuser'],
 
 											);
 

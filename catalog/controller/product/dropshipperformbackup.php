@@ -94,12 +94,6 @@ class ControllerProductDropshipperform extends Controller {
 				'limit'              => $limit
 			);
 
-			$cart_products = $this->cart->getProducts();
-			$cart_product_ids['product_id'] = array();
-			foreach($cart_products as $cp){
-				$cart_product_ids['product_id'][] = $cp['product_id'];
-			}
-
 			$product_total = $this->model_catalog_product->getTotalProducts($filter_data);
 
 			$results = $this->model_catalog_product->getProducts($filter_data);
@@ -136,38 +130,6 @@ class ControllerProductDropshipperform extends Controller {
 				}
 
         $data['options'] = array();
-				$product_data = array();
-				$cart_options = array();
-
-				if(in_array($result['product_id'], $cart_product_ids['product_id'])){
-					foreach($cart_products as $cp){
-
-						// foreach($cp['option'] as $cpo){
-						//
-						// 	$cart_options[] = array(
-						// 		'product_id' => $result['product_id'],
-						// 		'product_option_id' => $cpo['product_option_id'],
-						// 		'option_value_id' => $cpo['option_value_id'],
-						// 		'product_option_value_id' => $cpo['product_option_value_id'],
-						// 		'option_option' => $cpo['option']
-						// 	);
-						// }
-
-						$product_data[] = array(
-							'name' => $cp['dropshipper_option'][0]['name'],
-							'lastname' => $cp['dropshipper_option'][0]['lastname'],
-							'email' => $cp['dropshipper_option'][0]['email'],
-							'phone' => $cp['dropshipper_option'][0]['phone'],
-							'country' => $cp['dropshipper_option'][0]['country'],
-							'postcode' => $cp['dropshipper_option'][0]['postcode'],
-							'address' => $cp['dropshipper_option'][0]['address'],
-							'eutaxuser' => $cp['dropshipper_option'][0]['eutaxuser'],
-							'option_option' => $cp['option']
-						);
-					}
-
-				}
-
 
         foreach ($this->model_catalog_product->getProductOptions($result['product_id']) as $option) {
           $product_option_value_data = array();
@@ -190,21 +152,11 @@ class ControllerProductDropshipperform extends Controller {
               );
             }
           }
-					// $selected_option = '';
-					// foreach($cart_options as $co){
-					// 	if($co['product_id'] == $result['product_id']){
-					// 		// var_dump($option['product_option_id']);
-					// 		if($co['product_option_id'] == $option['product_option_id']){
-					// 			$selected_option = $co['product_option_value_id'];
-					// 		}
-					// 	}
-					// }
 
           $data['options'][] = array(
             'product_option_id'    => $option['product_option_id'],
             'product_option_value' => $product_option_value_data,
             'option_id'            => $option['option_id'],
-            // 'selected_option_id'   => $selected_option,
             'name'                 => $option['name'],
             'type'                 => $option['type'],
             'value'                => $option['value'],
@@ -216,7 +168,6 @@ class ControllerProductDropshipperform extends Controller {
 					'product_id'  => $result['product_id'],
 					'thumb'       => $image,
 					'name'        => $result['name'],
-					'cart_data'   => $product_data,
 					'options'        => $data['options'],
 					'description' => utf8_substr(trim(strip_tags(html_entity_decode($result['description'], ENT_QUOTES, 'UTF-8'))), 0, $this->config->get('theme_' . $this->config->get('config_theme') . '_product_description_length')) . '..',
 					'price'       => $price,
@@ -227,6 +178,28 @@ class ControllerProductDropshipperform extends Controller {
 					'href'        => $this->url->link('product/product', '&product_id=' . $result['product_id'] . $url)
 				);
 			}
+
+//sheit sakas
+			$cart_products = $this->cart->getProducts();
+
+			foreach($cart_products as $cp){
+				$test['product_id'][] = $cp['product_id'];
+			}
+
+
+
+			foreach($data['products'] as $products ){
+				if(in_array($products['product_id'], $test['product_id'])){
+					foreach($cart_products as $cp){
+						echo $products['name'].'yess<br />';
+					}
+				}
+				else{
+					echo $products['name'].'<br />';
+				}
+			}
+//sheit beidzas
+
 
 			$url = '';
 

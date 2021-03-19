@@ -10,12 +10,12 @@
 	  <td class="name">{{ column_name }}</td>
 		{% if dropshipper == 1 %}
 		<td>{{ column_shipping }}</td>
-		{% else %}
-	  <td class="quantity">{{ column_quantity }}</td>
 		{% endif %}
+	  <td class="quantity">{{ column_quantity }}</td>
 	  <td class="price1 hidden-xs">{{ column_price }}</td>
 		{% if dropshipper == 1 %}
 		<td>{{ column_shipping }}</td>
+		<td>{{ column_tax_rate }}</td>
 		<td>{{ column_tax }}</td>
 		{% endif %}
 	  <td class="total hidden-xs">{{ column_total }}</td>
@@ -52,8 +52,13 @@
 											<tr><td>{{ text_shipping_address }}:</td><td>{{ product.dropshipper_option['address'] }}</td></tr>
 											<tr><td>{{ text_shipping_postcode }}:</td><td>{{ product.dropshipper_option['postcode'] }}</td></tr>
 											<tr><td>{{ text_shipping_country }}:</td><td>{{ product.dropshipper_option['country'] }}</td></tr>
-
+											{% if product.dropshipper_option['eutaxuser'] == 1 %}
+											<tr><td colspan="2">{{ text_shipping_eutaxuser }}</td><td></td></tr>
+										  {% endif %}
 										</table>
+						</td>
+						<td>
+						{{ product.quantity }}
 						</td>
 				{% else %}
 	        <td class="quantity">
@@ -76,6 +81,7 @@
 		  <td class="price1 hidden-xs">{{ product.price }}</td>
 			{% if dropshipper == 1 %}
 				<td>{{ product.shipping }}</td>
+				<td>{{ product.tax_rate }}</td>
 				<td>{{ product.tax }}</td>
 			{% endif %}
 			<td class="total hidden-xs">{{ product.total }}</td>
