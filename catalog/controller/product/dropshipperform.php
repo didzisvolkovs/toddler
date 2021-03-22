@@ -142,28 +142,22 @@ class ControllerProductDropshipperform extends Controller {
 				if(in_array($result['product_id'], $cart_product_ids['product_id'])){
 					foreach($cart_products as $cp){
 
-						// foreach($cp['option'] as $cpo){
-						//
-						// 	$cart_options[] = array(
-						// 		'product_id' => $result['product_id'],
-						// 		'product_option_id' => $cpo['product_option_id'],
-						// 		'option_value_id' => $cpo['option_value_id'],
-						// 		'product_option_value_id' => $cpo['product_option_value_id'],
-						// 		'option_option' => $cpo['option']
-						// 	);
-						// }
 
-						$product_data[] = array(
-							'name' => $cp['dropshipper_option'][0]['name'],
-							'lastname' => $cp['dropshipper_option'][0]['lastname'],
-							'email' => $cp['dropshipper_option'][0]['email'],
-							'phone' => $cp['dropshipper_option'][0]['phone'],
-							'country' => $cp['dropshipper_option'][0]['country'],
-							'postcode' => $cp['dropshipper_option'][0]['postcode'],
-							'address' => $cp['dropshipper_option'][0]['address'],
-							'eutaxuser' => $cp['dropshipper_option'][0]['eutaxuser'],
-							'option_option' => $cp['option']
-						);
+						if($cp['product_id'] == $result['product_id']){
+
+							$product_data[] = array(
+								'product_id' => $cp['product_id'],
+								'name' => $cp['dropshipper_option'][0]['name'],
+								'lastname' => $cp['dropshipper_option'][0]['lastname'],
+								'email' => $cp['dropshipper_option'][0]['email'],
+								'phone' => $cp['dropshipper_option'][0]['phone'],
+								'country' => $cp['dropshipper_option'][0]['country'],
+								'postcode' => $cp['dropshipper_option'][0]['postcode'],
+								'address' => $cp['dropshipper_option'][0]['address'],
+								'eutaxuser' => $cp['dropshipper_option'][0]['eutaxuser'],
+								'option_option' => $cp['option']
+							);
+						}
 					}
 
 				}
@@ -227,6 +221,7 @@ class ControllerProductDropshipperform extends Controller {
 					'href'        => $this->url->link('product/product', '&product_id=' . $result['product_id'] . $url)
 				);
 			}
+
 
 			$url = '';
 

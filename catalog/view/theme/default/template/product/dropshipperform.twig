@@ -36,14 +36,6 @@
           {% for cdoption in cd.option_option %}
 
 
-
-
-
-
-
-
-
-
           {% if product.options %}
             <hr>
             <h3>{{ text_option }}</h3>
@@ -53,7 +45,7 @@
                     <div class="form-group{% if option.required %} required {% endif %}">
                       <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
                       <input type="hidden" class="product-option-id" data-name="product-option-id" value="{{ option.product_option_id }}"  />
-                      <select name="data[{{ product.product_id }}][{{ loop.index }}][option][{{ option.product_option_id }}]" id="input-option{{ option.product_option_id }}" data-name="option" data-productid="{{ option.product_option_id }}" class="form-control">
+                      <select name="data[{{ product.product_id }}][{{ loop.parent.loop.parent.loop.index }}][option][{{ option.product_option_id }}]" id="input-option{{ option.product_option_id }}" data-name="option" data-productid="{{ option.product_option_id }}" class="form-control">
                         <option value="">{{ text_select }}</option>
                         {% for option_value in option.product_option_value %}
                       <option value="{{ option_value.product_option_value_id }}"
@@ -72,7 +64,7 @@
                       {% for option_value in option.product_option_value %}
                         <div class="radio">
                           <label>
-                        <input type="radio" name="data[{{ product.product_id }}][{{ loop.index }}][option][{{ option.product_option_id }}]" value="{{ option_value.product_option_value_id }}" data-name="option" {% if cdoption.product_option_value_id == option_value.product_option_value_id %} checked {% endif %} {{ option_value.name }} />
+                        <input type="radio" name="data[{{ product.product_id }}][{{ loop.parent.loop.parent.loop.parent.loop.index }}][option][{{ option.product_option_id }}]" value="{{ option_value.product_option_value_id }}" data-name="option" {% if cdoption.product_option_value_id == option_value.product_option_value_id %} checked {% endif %} {{ option_value.name }} />
                             {% if option_value.image %} <img src="{{ option_value.image }}" alt="{{ option_value.name }}
                             {% if option_value.price %} {{ option_value.price_prefix }} {{ option_value.price }} {% endif %}" class="img-thumbnail" /> {% endif %}
                             {{ option_value.name }}
@@ -89,7 +81,7 @@
                       <div id="input-option{{ option.product_option_id }}"> {% for option_value in option.product_option_value %}
                         <div class="checkbox">
                           <label>
-                            <input type="checkbox" name="data[{{ product.product_id }}][{{ loop.index }}][option][{{ option.product_option_id }}][]" value="{{ option_value.product_option_value_id }}" data-name="option" />
+                            <input type="checkbox" name="data[{{ product.product_id }}][{{ loop.parent.loop.parent.loop.index }}][option][{{ option.product_option_id }}][]" value="{{ option_value.product_option_value_id }}" data-name="option" />
                             {% if option_value.image %} <img src="{{ option_value.image }}" alt="{{ option_value.name }} {% if option_value.price %} {{ option_value.price_prefix }} {{ option_value.price }} {% endif %}" class="img-thumbnail" /> {% endif %}
                             {{ option_value.name }}
                             {% if option_value.price %}
@@ -102,7 +94,7 @@
                     {% if option.type == 'text' %}
                     <div class="form-group{% if option.required %} required {% endif %}">
                       <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
-                      <input type="text" name="data[{{ product.product_id }}][{{ loop.index }}][option][{{ option.product_option_id }}]" value="{{ option.value }}" placeholder="{{ option.name }}" id="input-option{{ option.product_option_id }}" class="form-control" />
+                      <input type="text" name="data[{{ product.product_id }}][{{ loop.parent.loop.parent.loop.index }}][option][{{ option.product_option_id }}]" value="{{ option.value }}" placeholder="{{ option.name }}" id="input-option{{ option.product_option_id }}" class="form-control" />
                     </div>
                     {% endif %}
                     {% if option.type == 'textarea' %}
@@ -115,13 +107,6 @@
             {% endfor %}
 
             {% endif %}
-
-
-
-
-
-
-
 
 
 

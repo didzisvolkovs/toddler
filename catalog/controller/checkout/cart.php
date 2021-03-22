@@ -262,8 +262,8 @@ class ControllerCheckoutCart extends Controller {
 	public function adddropship() {
 
 
-
 		if(isset($this->request->post['data'])){
+			$this->cart->clear();
 			foreach($this->request->post['data'] as $key => $productdata){
 
 				$this->load->language('checkout/cart');
