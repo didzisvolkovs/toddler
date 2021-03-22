@@ -5,11 +5,11 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 		$data = array_merge($data, $this->load->language('extension/quickcheckout/checkout'));
 		$data['error_warning'] = '';
 
-		if ($this->cart->hasProducts() || !empty($this->session->data['vouchers'])) {
-			if (!$this->cart->hasStock() && (!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning'))) {
-				$data['error_warning_stock'] = $this->language->get('error_stock');
-			}
-		}
+		// if ($this->cart->hasProducts() || !empty($this->session->data['vouchers'])) {
+		// 	if (!$this->cart->hasStock() && (!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning'))) {
+		// 		$data['error_warning_stock'] = $this->language->get('error_stock');
+		// 	}
+		// }
 
 		// Totals
 		$this->load->model('setting/extension');
@@ -261,11 +261,11 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 			$json['redirect'] = $this->url->link('checkout/cart');
 		}
 
-		if (!$this->cart->hasStock() && (!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning'))) {
-            $json['error']['stock'] = $this->language->get('error_stock');
-        } else {
-            $json['error']['stock'] = '';
-        }
+		// if (!$this->cart->hasStock() && (!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning'))) {
+    //         $json['error']['stock'] = $this->language->get('error_stock');
+    //     } else {
+    //         $json['error']['stock'] = '';
+    //     }
 
 		// Validate minimum quantity requirements.
 		$products = $this->cart->getProducts();

@@ -99,12 +99,12 @@ class ControllerExtensionQuickCheckoutCheckout extends Controller {
 		}
 
 		// Validate cart has stock, minimum order total and minimum quantity product
-		if (!$this->cart->hasStock() && (!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning'))) {
-            $data['error_warning'] = $this->language->get('error_stock');
-        } elseif ($this->cart->getTotal() < (float)$this->config->get('quickcheckout_minimum_order')) {
-			$this->session->data['error'] = sprintf($this->language->get('error_minimum_order'), $this->currency->format($this->config->get('quickcheckout_minimum_order'), $this->session->data['currency']));
-			$data['error_warning'] = sprintf($this->language->get('error_minimum_order'), $this->currency->format($this->config->get('quickcheckout_minimum_order'), $this->session->data['currency']));
-		}
+		// if (!$this->cart->hasStock() && (!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning'))) {
+    //         $data['error_warning'] = $this->language->get('error_stock');
+    //     } elseif ($this->cart->getTotal() < (float)$this->config->get('quickcheckout_minimum_order')) {
+		// 	$this->session->data['error'] = sprintf($this->language->get('error_minimum_order'), $this->currency->format($this->config->get('quickcheckout_minimum_order'), $this->session->data['currency']));
+		// 	$data['error_warning'] = sprintf($this->language->get('error_minimum_order'), $this->currency->format($this->config->get('quickcheckout_minimum_order'), $this->session->data['currency']));
+		// }
 
 		$this->document->setTitle($this->language->get('heading_title'));
 		$data['heading_title'] = $this->language->get('heading_title');
