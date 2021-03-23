@@ -87,10 +87,13 @@ class ModelLocalisationTaxRate extends Model {
 																			LEFT JOIN " . DB_PREFIX . "geo_zone gz ON (tr2.geo_zone_id = gz.geo_zone_id)
 																		WHERE tr1.based = 'shipping' AND tr2cg.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND
 																					z2gz.country_id = '" . (int)$country_id . "'
-																		ORDER BY tr1.priority ASC");
+																		ORDER BY tr1.priority ASC
+                                    limit 1
+                                    ");
 
-
-		return $tax_query->row['rate'];
+      if($tax_query->row){
+  		return $tax_query->row;
+			}
 	}
 
 	public function getTaxRateCustomerGroups($tax_rate_id) {

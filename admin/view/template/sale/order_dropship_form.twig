@@ -1192,6 +1192,7 @@ $('#tab-product input[name=\'product\']').autocomplete({
 			dataType: 'json',
 			success: function(json) {
 				response($.map(json, function(item) {
+          console.log(item);
 					return {
 						label: item['name'],
 						value: item['product_id'],
@@ -1356,7 +1357,72 @@ $('#tab-product input[name=\'product\']').autocomplete({
 					html += '  <div class="col-sm-3"><div class="input-group time"><input type="text" name="option[' + option['product_option_id'] + ']" value="' + option['value'] + '" placeholder="' + option['name'] + '" data-date-format="HH:mm" id="input-option' + option['product_option_id'] + '" class="form-control" /><span class="input-group-btn"><button type="button" class="btn btn-default"><i class="fa fa-calendar"></i></button></span></div></div>';
 					html += '</div>';
 				}
+
 			}
+
+				html += '<div class="form-group required">';
+        html += '  <label class="col-sm-2 control-label">Name</label>';
+        html += '  <div class="col-sm-10">';
+        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][name]" id="' + item['product_id'] + '-name-1" data-name="name" value="" placeholder="Name" />';
+        html +=   '</div>';
+        html += '</div>';
+
+        html += '<div class="form-group required">';
+        html += '  <label class="col-sm-2 control-label">Last Name</label>';
+        html += '  <div class="col-sm-10">';
+        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][surname]" id="' + item['product_id'] + '-surname-1" data-name="surname" value="" placeholder="surname" />';
+        html +=   '</div>';
+        html += '</div>';
+
+        html += '<div class="form-group required">';
+        html += '  <label class="col-sm-2 control-label">Email</label>';
+        html += '  <div class="col-sm-10">';
+        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][email]" id="' + item['product_id'] + '-email-1" data-name="email" value="" placeholder="Email" />';
+        html +=   '</div>';
+        html += '</div>';
+
+        html += '<div class="form-group required">';
+        html += '  <label class="col-sm-2 control-label">Phone</label>';
+        html += '  <div class="col-sm-10">';
+        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][phone]" id="' + item['product_id'] + '-phone-1" data-name="phone" value="" placeholder="Phone" />';
+        html +=   '</div>';
+        html += '</div>';
+
+        html += '<div class="form-group required">';
+        html += '  <label class="col-sm-2 control-label">Country</label>';
+        html += '  <div class="col-sm-10">';
+        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][country]" id="' + item['product_id'] + '-country-1" data-name="country" value="" placeholder="Country"/>';
+        html +=   '</div>';
+        html += '</div>';
+
+        html += '<div class="form-group required">';
+        html += '  <label class="col-sm-2 control-label">Postcode</label>';
+        html += '  <div class="col-sm-10">';
+        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][postcode]" id="' + item['product_id'] + '-postcode-1" data-name="postcode" value="" placeholder="Postcode" />';
+        html +=   '</div>';
+        html += '</div>';
+
+        html += '<div class="form-group required">';
+        html += '  <label class="col-sm-2 control-label">Address</label>';
+        html += '  <div class="col-sm-10">';
+        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][address]" id="' + item['product_id'] + '-address-1" data-name="address" value="" Placeholder="Address" />';
+        html +=   '</div>';
+        html += '</div>';
+
+        html += '<div class="form-group required">';
+        html += '  <label class="col-sm-2 control-label">Address</label>';
+        html += '  <div class="col-sm-10">';
+        html +=     '<select name="data[' + item['product_id'] + '][1][eutaxuser]" id="' + item['product_id'] + '-eutaxuser-1" data-name="eutaxuser" class="form-control">';
+        html +=     '  <option value="" selected="selected">-- Select --</option>';
+        html +=     '  <option value="0">No</option>';
+        html +=     '  <option value="1">Yes</option>';
+        html +=    '</select>';
+        html +=   '</div>';
+        html += '</div>';
+
+
+
+
 
 			html += '</fieldset>';
 

@@ -60,6 +60,7 @@ $_['text_commission_removed']    = 'Success: Commission removed!';
 $_['text_restock']               = 'Success: Products have been restocked!';
 $_['text_upload']                = 'Your file was successfully uploaded!';
 $_['text_picklist']              = 'Dispatch Note';
+$_['text_shipping_eutaxuser']    = 'EU Tax User';
 
 $_['text_shipping_name']         = 'Name';
 $_['text_shipping_last_name']    = 'Last Name';

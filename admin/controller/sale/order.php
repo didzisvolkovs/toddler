@@ -735,7 +735,8 @@ class ControllerSaleOrder extends Controller {
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
 
-		$this->response->setOutput($this->load->view('sale/order_form', $data));
+		// $this->response->setOutput($this->load->view('sale/order_form', $data));
+		$this->response->setOutput($this->load->view('sale/order_dropship_form', $data));
 	}
 
 	public function updategifts() {
@@ -1050,13 +1051,14 @@ class ControllerSaleOrder extends Controller {
 				if($dropshipper_options){
 					$data['dropshipper'] = 1;
 					foreach($dropshipper_options as $dropshipper_option){
-						$country = $this->model_localisation_country->getCountry($dropshipper_option['shipping_country']);
 
-						  $tax = $this->model_localisation_tax_rate->setShippingAddress($country['country_id']);
+						$country = $this->model_localisation_country->getCountry($dropshipper_option['shipping_country']);
+						$tax = $this->model_localisation_tax_rate->setShippingAddress($country['country_id']);
 
 						 // $tax = $this->model_localisation_zone->getZonesByCountryId($dropshipper_option['shipping_country']);
 
-						$dropshipper_option_data[] = array(
+
+						$dropshipper_option_data = array(
 							'name' => $dropshipper_option['shipping_firstname'],
 							'lastname' => $dropshipper_option['shipping_lastname'],
 							'email' => $dropshipper_option['shipping_email'],
@@ -1064,12 +1066,31 @@ class ControllerSaleOrder extends Controller {
 							'address' => $dropshipper_option['shipping_address_1'],
 							'postcode' => $dropshipper_option['shipping_postcode'],
 							'country' => $country['name'],
-							'tax' => $tax
+							'eutaxuser' => $dropshipper_option['shipping_eutaxuser']
 						);
+							$product['shipping'] = $country['shipping'];
+
+						if($tax){
+							$product_tax = 0;
+							if($dropshipper_option_data['eutaxuser'] == 1){
+								$product_tax = 0;
+							}
+							else{
+								$product_tax = ((float)$product['price'] * $product['quantity']) * ((int)$tax['rate'] / 100);
+							}
+						  $product['tax'] = round(($country['shipping'] * ((int)$tax['rate'] / 100)) + $product_tax, 2) ;
+						  $product['tax_rate'] = (int)$tax['rate'].'%' ;
+						}
+						else{
+							$product['tax'] = '0.00';
+							$product['tax_rate'] = '';
+						}
+
 					}
 				}
 				else{
 					$data['dropshipper'] = 0;
+					$product['tax'] = '0.00';
 				}
 
 				// var_dump($dropshipper_option_data);
@@ -1099,8 +1120,28 @@ class ControllerSaleOrder extends Controller {
 						}
 					}
 				}
+				if($data['dropshipper']){
+					$price = $this->currency->format($product['price'], $order_info['currency_code'], $order_info['currency_value']);
+					$total = $this->currency->format(($product['total']  * $product['quantity']) + $product['tax'] + $product['shipping'], $order_info['currency_code'], $order_info['currency_value']);
+				}
+				else{
+					$price = $this->currency->format($product['price'] + ($this->config->get('config_tax') ? $product['tax'] : 0), $order_info['currency_code'], $order_info['currency_value']);
+					$total = $this->currency->format($product['total'] + ($this->config->get('config_tax') ? ($product['tax'] * $product['quantity']) : 0), $order_info['currency_code'], $order_info['currency_value']);
 
+				}
 
+				if(isset($product['tax_rate'])){
+					$product_tax_rate = $product['tax_rate'];
+				}
+				else{
+					$product_tax_rate = 0;
+				}
+				if(isset($product['shipping'])){
+					$product_shipping = $product['shipping'];
+				}
+				else{
+					$product_shipping = 0;
+				}
 
 				$data['products'][] = array(
 					'order_product_id' => $product['order_product_id'],
@@ -1109,9 +1150,12 @@ class ControllerSaleOrder extends Controller {
 					'model'    		   => $product['model'],
 					'option'   		   => $option_data,
 					'dropshipper_option'  => $dropshipper_option_data,
+					'tax'    				=> $product['tax'],
+					'tax_rate'    	=> $product_tax_rate,
+					'shipping'    	=> $product_shipping,
 					'quantity'		   => $product['quantity'],
-					'price'    		   => $this->currency->format($product['price'] + ($this->config->get('config_tax') ? $product['tax'] : 0), $order_info['currency_code'], $order_info['currency_value']),
-					'total'    		   => $this->currency->format($product['total'] + ($this->config->get('config_tax') ? ($product['tax'] * $product['quantity']) : 0), $order_info['currency_code'], $order_info['currency_value']),
+					'price'    		   => $price,
+					'total'    		   => $total,
 					'href'     		   => $this->url->link('catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product['product_id'], true)
 				);
 			}
@@ -1647,7 +1691,8 @@ class ControllerSaleOrder extends Controller {
 		$data['lang'] = $this->language->get('code');
 
 		$this->load->model('sale/order');
-
+		$this->load->model('localisation/country');
+		$this->load->model('localisation/tax_rate');
 		$this->load->model('setting/setting');
 
 		$data['orders'] = array();
@@ -1759,6 +1804,54 @@ class ControllerSaleOrder extends Controller {
 				$products = $this->model_sale_order->getOrderProducts($order_id);
 
 				foreach ($products as $product) {
+					$dropshipper_option_data = array();
+
+					$dropshipper_options = $this->model_sale_order->getOrderDropshipperOptions($this->request->get['order_id'], $product['order_product_id']);
+
+					if($dropshipper_options){
+						$data['dropshipper'] = 1;
+						foreach($dropshipper_options as $dropshipper_option){
+
+							$country = $this->model_localisation_country->getCountry($dropshipper_option['shipping_country']);
+							$tax = $this->model_localisation_tax_rate->setShippingAddress($country['country_id']);
+
+							 // $tax = $this->model_localisation_zone->getZonesByCountryId($dropshipper_option['shipping_country']);
+
+
+							$dropshipper_option_data = array(
+								'name' => $dropshipper_option['shipping_firstname'],
+								'lastname' => $dropshipper_option['shipping_lastname'],
+								'email' => $dropshipper_option['shipping_email'],
+								'phone' => $dropshipper_option['shipping_phone'],
+								'address' => $dropshipper_option['shipping_address_1'],
+								'postcode' => $dropshipper_option['shipping_postcode'],
+								'country' => $country['name'],
+								'eutaxuser' => $dropshipper_option['shipping_eutaxuser']
+							);
+								$product['shipping'] = $country['shipping'];
+
+							if($tax){
+								$product_tax = 0;
+								if($dropshipper_option_data['eutaxuser'] == 1){
+									$product_tax = 0;
+								}
+								else{
+									$product_tax = ((float)$product['price'] * $product['quantity']) * ((int)$tax['rate'] / 100);
+								}
+								$product['tax'] = round(($country['shipping'] * ((int)$tax['rate'] / 100)) + $product_tax, 2) ;
+								$product['tax_rate'] = (int)$tax['rate'].'%' ;
+							}
+							else{
+								$product['tax'] = '0.00';
+								$product['tax_rate'] = '';
+							}
+
+						}
+					}
+					else{
+						$data['dropshipper'] = 0;
+						$product['tax'] = '0.00';
+					}
 					$option_data = array();
 
 					$options = $this->model_sale_order->getOrderOptions($order_id, $product['order_product_id']);
@@ -1782,15 +1875,32 @@ class ControllerSaleOrder extends Controller {
 						);
 					}
 
+					if($data['dropshipper']){
+						$price = $this->currency->format($product['price'], $order_info['currency_code'], $order_info['currency_value']);
+						$total = $this->currency->format(($product['total']  * $product['quantity']) + $product['tax'] + $product['shipping'], $order_info['currency_code'], $order_info['currency_value']);
+					}
+					else{
+						$price = $this->currency->format($product['price'] + ($this->config->get('config_tax') ? $product['tax'] : 0), $order_info['currency_code'], $order_info['currency_value']);
+						$total = $this->currency->format($product['total'] + ($this->config->get('config_tax') ? ($product['tax'] * $product['quantity']) : 0), $order_info['currency_code'], $order_info['currency_value']);
+
+					}
+
 					$product_data[] = array(
 						'name'     => $product['name'],
 						'model'    => $product['model'],
 						'option'   => $option_data,
+						'dropshipper_option'  => $dropshipper_option_data,
+						'tax'    				=> $product['tax'],
+						'tax_rate'    	=> $product['tax_rate'],
+						'shipping'    	=> $product['shipping'],
 						'quantity' => $product['quantity'],
-						'price'    => $this->currency->format($product['price'] + ($this->config->get('config_tax') ? $product['tax'] : 0), $order_info['currency_code'], $order_info['currency_value']),
-						'total'    => $this->currency->format($product['total'] + ($this->config->get('config_tax') ? ($product['tax'] * $product['quantity']) : 0), $order_info['currency_code'], $order_info['currency_value'])
+						// 'price'    => $this->currency->format($product['price'] + ($this->config->get('config_tax') ? $product['tax'] : 0), $order_info['currency_code'], $order_info['currency_value']),
+						'price'    => $price,
+						// 'total'    => $this->currency->format($product['total'] + ($this->config->get('config_tax') ? ($product['tax'] * $product['quantity']) : 0), $order_info['currency_code'], $order_info['currency_value'])
+						'total'    => $total
 					);
 				}
+
 
 				$voucher_data = array();
 

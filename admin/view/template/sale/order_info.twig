@@ -129,16 +129,19 @@
           <thead>
             <tr>
               <td style="width: 50%;" class="text-left">{{ text_payment_address }}</td>
+              {% if dropshipper != 1 %}
               {% if shipping_method %}
               <td style="width: 50%;" class="text-left">{{ text_shipping_address }}</td>
-              {% endif %} </tr>
+              {% endif %}{% endif %} </tr>
+
           </thead>
           <tbody>
             <tr>
               <td class="text-left">{{ payment_address }}</td>
+              {% if dropshipper != 1 %}
               {% if shipping_method %}
               <td class="text-left">{{ shipping_address }}</td>
-              {% endif %} </tr>
+              {% endif %}{% endif %} </tr>
           </tbody>
         </table>
         <table class="table table-bordered">
@@ -151,6 +154,11 @@
               {% endif %}
               <td class="text-right">{{ column_quantity }}</td>
               <td class="text-right">{{ column_price }}</td>
+              {% if dropshipper == 1 %}
+              <td class="text-left">Shipping</td>
+              <td class="text-left">Tax Rate</td>
+              <td class="text-left">Tax</td>
+              {% endif %}
               <td class="text-right">{{ column_total }}</td>
             </tr>
           </thead>
@@ -167,23 +175,29 @@
 
             <td class="text-left">{{ product.model }}</td>
             {% if dropshipper == 1 %}
-            <td class="text-left">
-            {% for dropshipper_option in product.dropshipper_option %}
-                    <table>
-                      <tr><td>{{ text_shipping_name }}:</td><td>{{ dropshipper_option.name }}</td></tr>
-                      <tr><td>{{ text_shipping_last_name }}:</td><td>{{ dropshipper_option.lastname }}</td></tr>
-                      <tr><td>{{ text_shipping_email }}:</td><td>{{ dropshipper_option.email }}</td></tr>
-                      <tr><td>{{ text_shipping_phone }}:</td><td>{{ dropshipper_option.phone }}</td></tr>
-                      <tr><td>{{ text_shipping_address }}:</td><td>{{ dropshipper_option.address }}</td></tr>
-                      <tr><td>{{ text_shipping_postcode }}:</td><td>{{ dropshipper_option.postcode }}</td></tr>
-                      <tr><td>{{ text_shipping_country }}:</td><td>{{ dropshipper_option.country }}</td></tr>
-                      <tr><td>tax:</td><td>{{ dropshipper_option.tax }}</td></tr>
-                    </table>
-            {% endfor %}
-            </td>
+    						<td>
+    										<table>
+    											<tr><td>{{ text_shipping_name }}:</td><td>{{ product.dropshipper_option['name'] }}</td></tr>
+    											<tr><td>{{ text_shipping_last_name }}:</td><td>{{ product.dropshipper_option['lastname'] }}</td></tr>
+    											<tr><td>{{ text_shipping_email }}:</td><td>{{ product.dropshipper_option['email'] }}</td></tr>
+    											<tr><td>{{ text_shipping_phone }}:</td><td>{{ product.dropshipper_option['phone'] }}</td></tr>
+    											<tr><td>{{ text_shipping_address }}:</td><td>{{ product.dropshipper_option['address'] }}</td></tr>
+    											<tr><td>{{ text_shipping_postcode }}:</td><td>{{ product.dropshipper_option['postcode'] }}</td></tr>
+    											<tr><td>{{ text_shipping_country }}:</td><td>{{ product.dropshipper_option['country'] }}</td></tr>
+    											{% if product.dropshipper_option['eutaxuser'] == 1 %}
+    											<tr><td colspan="2">{{ text_shipping_eutaxuser }}</td><td></td></tr>
+    										  {% endif %}
+    										</table>
+    						</td>
+
             {% endif %}
             <td class="text-right">{{ product.quantity }}</td>
             <td class="text-right">{{ product.price }}</td>
+            {% if dropshipper == 1 %}
+            <td class="text-right">{{ product.shipping }}</td>
+            <td class="text-right">{{ product.tax_rate }}</td>
+            <td class="text-right">{{ product.tax }}</td>
+            {% endif %}
             <td class="text-right">{{ product.total }}</td>
           </tr>
           {% endfor %}
@@ -199,7 +213,7 @@
           {% endfor %}
           {% for total in totals %}
           <tr>
-        <td colspan="{% if dropshipper == 1 %}5{% else %}4{% endif %}" class="text-right">{{ total.title }}</td>
+        <td colspan="{% if dropshipper == 1 %}8{% else %}4{% endif %}" class="text-right">{{ total.title }}</td>
             <td class="text-right">{{ total.text }}</td>
           </tr>
           {% endfor %}

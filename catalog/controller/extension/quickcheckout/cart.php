@@ -132,7 +132,6 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 					);
 					$product['shipping'] = $country['shipping'];
 
-
 					if($tax_rate){
 						$product_tax = 0;
 						if($dropshipper_option_data['eutaxuser'] == 1){
@@ -201,6 +200,19 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 				}
 			}
 
+			if(isset($product['tax_rate'])){
+				$product_tax_rate = $product['tax_rate'];
+			}
+			else{
+				$product_tax_rate = 0;
+			}
+			if(isset($product['shipping'])){
+				$product_shipping = $product['shipping'];
+			}
+			else{
+				$product_shipping = 0;
+			}
+
 			$data['products'][] = array(
 				'key'        => isset($product['key']) ? $product['key'] : $product['cart_id'],
 				'thumb'     => $image,
@@ -209,8 +221,8 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 				'option'    => $option_data,
 				'dropshipper_option'    => $dropshipper_option_data,
 				'tax'    => $product['tax'],
-				'tax_rate'    => $product['tax_rate'],
-				'shipping'    => $product['shipping'],
+				'tax_rate'    => $product_tax_rate,
+				'shipping'    => $product_shipping,
 				'recurring' => $recurring,
 				'quantity'  => $product['quantity'],
 				'stock'     => $product['stock'] ? true : !(!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning')),
