@@ -4,12 +4,15 @@ class ControllerApiCart extends Controller {
 		$this->load->language('api/cart');
 
 		$json = array();
-			
+
+
+
 		if (!isset($this->session->data['api_id'])) {
 			$json['error']['warning'] = $this->language->get('error_permission');
 		} else {
 			if (isset($this->request->post['product'])) {
 				$this->cart->clear();
+
 
 				foreach ($this->request->post['product'] as $product) {
 					if (isset($product['option'])) {
@@ -18,7 +21,15 @@ class ControllerApiCart extends Controller {
 						$option = array();
 					}
 
-					$this->cart->add($product['product_id'], $product['quantity'], $option);
+					if (isset($product['dropshipper_option'])) {
+						$dropshipper_option = $product['dropshipper_option'];
+					} else {
+						$dropshipper_option = array();
+					}
+
+
+
+					$this->cart->add($product['product_id'], $product['quantity'], $option, '', $dropshipper_option);
 				}
 
 				$json['success'] = $this->language->get('text_success');
@@ -53,8 +64,24 @@ class ControllerApiCart extends Controller {
 						}
 					}
 
+
+
 					if (!isset($json['error']['option'])) {
-						$this->cart->add($this->request->post['product_id'], $quantity, $option);
+
+						 // var_dump($this->request->post);
+
+						$dropshipper_option = array(
+							'name' => $this->request->post['name'],
+							'lastname' => $this->request->post['surname'],
+							'email' => $this->request->post['email'],
+							'phone' => $this->request->post['phone'],
+							'country' => $this->request->post['country'],
+							'postcode' => $this->request->post['postcode'],
+							'address' => $this->request->post['address'],
+							'eutaxuser' => $this->request->post['eutaxuser'],
+						);
+
+						$this->cart->add($this->request->post['product_id'], $quantity, $option,'', $dropshipper_option);
 
 						$json['success'] = $this->language->get('text_success');
 
@@ -133,9 +160,9 @@ class ControllerApiCart extends Controller {
 			$json['error']['warning'] = $this->language->get('error_permission');
 		} else {
 			// Stock
-			if (!$this->cart->hasStock() && (!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning'))) {
-				$json['error']['stock'] = $this->language->get('error_stock');
-			}
+			// if (!$this->cart->hasStock() && (!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning'))) {
+			// 	$json['error']['stock'] = $this->language->get('error_stock');
+			// }
 
 			// Products
 			$json['products'] = array();
@@ -151,9 +178,63 @@ class ControllerApiCart extends Controller {
 					}
 				}
 
-				if ($product['minimum'] > $product_total) {
-					$json['error']['minimum'][] = sprintf($this->language->get('error_minimum'), $product['name'], $product['minimum']);
-				}
+				// if ($product['minimum'] > $product_total) {
+				// 	$json['error']['minimum'][] = sprintf($this->language->get('error_minimum'), $product['name'], $product['minimum']);
+				// }
+
+				// $this->load->model('localisation/country');
+				// $this->load->model('localisation/tax_rate');
+				// $this->load->model('sale/order');
+				//
+				// $dropshipper_option_data = array();
+				//
+				// $dropshipper_options = $this->model_sale_order->getOrderDropshipperOptions($this->request->get['order_id'], $product['order_product_id']);
+				//
+				// if($dropshipper_options){
+				// 	$data['dropshipper'] = 1;
+				// 	foreach($dropshipper_options as $dropshipper_option){
+				//
+				// 		$country = $this->model_localisation_country->getCountry($dropshipper_option['shipping_country']);
+				// 		$tax = $this->model_localisation_tax_rate->setShippingAddress($country['country_id']);
+				//
+				// 		 // $tax = $this->model_localisation_zone->getZonesByCountryId($dropshipper_option['shipping_country']);
+				//
+				//
+				// 		$dropshipper_option_data = array(
+				// 			'name' => $dropshipper_option['shipping_firstname'],
+				// 			'lastname' => $dropshipper_option['shipping_lastname'],
+				// 			'email' => $dropshipper_option['shipping_email'],
+				// 			'phone' => $dropshipper_option['shipping_phone'],
+				// 			'address' => $dropshipper_option['shipping_address_1'],
+				// 			'postcode' => $dropshipper_option['shipping_postcode'],
+				// 			'country' => $country['name'],
+				// 			'eutaxuser' => $dropshipper_option['shipping_eutaxuser']
+				// 		);
+				// 			$product['shipping'] = $country['shipping'];
+				//
+				// 		if($tax){
+				// 			$product_tax = 0;
+				// 			if($dropshipper_option_data['eutaxuser'] == 1){
+				// 				$product_tax = 0;
+				// 			}
+				// 			else{
+				// 				$product_tax = ((float)$product['price'] * $product['quantity']) * ((int)$tax['rate'] / 100);
+				// 			}
+				// 			$product['tax'] = round(($country['shipping'] * ((int)$tax['rate'] / 100)) + $product_tax, 2) ;
+				// 			$product['tax_rate'] = (int)$tax['rate'].'%' ;
+				// 		}
+				// 		else{
+				// 			$product['tax'] = '0.00';
+				// 			$product['tax_rate'] = '';
+				// 		}
+				//
+				// 	}
+				// }
+				// else{
+				// 	$data['dropshipper'] = 0;
+				// 	$product['tax'] = '0.00';
+				// }
+
 
 				$option_data = array();
 
@@ -167,17 +248,67 @@ class ControllerApiCart extends Controller {
 					);
 				}
 
+// var_dump($product['dropshipper_option']);
+
+				$dropshipper_option_data = array();
+				if($product['dropshipper_option']){
+					$data['dropshipper'] = 1;
+
+
+					foreach ($product['dropshipper_option'] as $dr_option) {
+						$this->load->model('localisation/country');
+
+						$this->load->model('localisation/tax_rate');
+						$country = $this->model_localisation_country->getCountry($dr_option['country']);
+						$tax = $this->model_localisation_tax_rate->setShippingAddress($country['country_id']);
+
+						$dropshipper_option_data = array(
+							'name'       => $dr_option['name'],
+							'lastname'   => $dr_option['lastname'],
+							'email'      => $dr_option['email'],
+							'phone'      => $dr_option['phone'],
+							'country'    => $country['name'],
+							'postcode'   => $dr_option['postcode'],
+							'address'    => $dr_option['address'],
+							'eutaxuser'  => $dr_option['eutaxuser']
+						);
+					}
+								$product['shipping'] = $country['shipping'];
+
+							if($tax){
+								$product_tax = 0;
+								if($dropshipper_option_data['eutaxuser'] == 1){
+									$product_tax = 0;
+								}
+								else{
+									$product_tax = ((float)$product['price'] * $product['quantity']) * ((int)$tax['rate'] / 100);
+								}
+								$product['tax'] = round(($country['shipping'] * ((int)$tax['rate'] / 100)) + $product_tax, 2) ;
+								$product['tax_rate'] = (int)$tax['rate'].'%' ;
+			 			}
+		 	}
+			 else{
+				 	$data['dropshipper'] = 0;
+				 	$product['tax'] = '0.00';
+					$product['tax_rate'] = 0;
+			 }
+
+
+
 				$json['products'][] = array(
 					'cart_id'    => $product['cart_id'],
 					'product_id' => $product['product_id'],
 					'name'       => $product['name'],
 					'model'      => $product['model'],
 					'option'     => $option_data,
+					'dropshipper_option'     => $dropshipper_option_data,
 					'quantity'   => $product['quantity'],
 					'stock'      => $product['stock'] ? true : !(!$this->config->get('config_stock_checkout') || $this->config->get('config_stock_warning')),
 					'shipping'   => $product['shipping'],
+					'tax_rate'   => $product['tax_rate'],
+					'tax'   => $product['tax'],
 					'price'      => $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']),
-					'total'      => $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']),
+					'total'      => $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'] + $product['tax'] + $product['shipping'], $this->session->data['currency']),
 					'reward'     => $product['reward']
 				);
 			}
@@ -196,7 +327,7 @@ class ControllerApiCart extends Controller {
 						'to_email'         => $voucher['to_email'],
 						'voucher_theme_id' => $voucher['voucher_theme_id'],
 						'message'          => $voucher['message'],
-						'price'            => $this->currency->format($voucher['amount'], $this->session->data['currency']),			
+						'price'            => $this->currency->format($voucher['amount'], $this->session->data['currency']),
 						'amount'           => $voucher['amount']
 					);
 				}
@@ -209,13 +340,13 @@ class ControllerApiCart extends Controller {
 			$taxes = $this->cart->getTaxes();
 			$total = 0;
 
-			// Because __call can not keep var references so we put them into an array. 
+			// Because __call can not keep var references so we put them into an array.
 			$total_data = array(
 				'totals' => &$totals,
 				'taxes'  => &$taxes,
 				'total'  => &$total
 			);
-			
+
 			$sort_order = array();
 
 			$results = $this->model_setting_extension->getExtensions('total');
@@ -229,7 +360,7 @@ class ControllerApiCart extends Controller {
 			foreach ($results as $result) {
 				if ($this->config->get('total_' . $result['code'] . '_status')) {
 					$this->load->model('extension/total/' . $result['code']);
-					
+
 					// We have to put the totals in an array so that they pass by reference.
 					$this->{'model_extension_total_' . $result['code']}->getTotal($total_data);
 				}
@@ -252,7 +383,7 @@ class ControllerApiCart extends Controller {
 				);
 			}
 		}
-		
+
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
 	}

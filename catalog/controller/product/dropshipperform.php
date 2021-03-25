@@ -1,6 +1,10 @@
 <?php
 class ControllerProductDropshipperform extends Controller {
 	public function index() {
+		$this->load->model('account/customer');
+		// if($this->customer->getGroupId() != 3){
+		// 	$this->response->redirect($this->url->link('common/home', '', true));
+		// }
 
 		$this->load->language('product/dropshipperform');
 

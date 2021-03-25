@@ -70,6 +70,8 @@ $_['text_shipping_address']      = 'Address';
 $_['text_shipping_postcode']     = 'Postcode';
 $_['text_shipping_country']      = 'Country';
 
+$_['text_eutaxuser']      = 'EU Tax User';
+
 // Column
 $_['column_order_id']            = 'Order ID';
 $_['column_customer']            = 'Customer';
@@ -87,6 +89,7 @@ $_['column_location']            = 'Location';
 $_['column_reference']           = 'Reference';
 $_['column_action']              = 'Action';
 $_['column_weight']              = 'Product Weight';
+$_['column_shipping']              = 'Shipping';
 
 // Entry
 $_['entry_store']                = 'Store';

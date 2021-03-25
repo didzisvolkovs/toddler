@@ -1,6 +1,10 @@
 <?php
 class ControllerProductRetailform extends Controller {
 	public function index() {
+		$this->load->model('account/customer');
+		// if($this->customer->getGroupId() != 2){
+		// 	$this->response->redirect($this->url->link('common/home', '', true));
+		// }
 		$this->load->language('product/retailform');
 
 		$this->load->model('catalog/product');

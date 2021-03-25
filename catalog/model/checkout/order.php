@@ -83,6 +83,21 @@ class ModelCheckoutOrder extends Model {
 				foreach ($product['option'] as $option) {
 					$this->db->query("INSERT INTO " . DB_PREFIX . "order_option SET order_id = '" . (int)$order_id . "', order_product_id = '" . (int)$order_product_id . "', product_option_id = '" . (int)$option['product_option_id'] . "', product_option_value_id = '" . (int)$option['product_option_value_id'] . "', name = '" . $this->db->escape($option['name']) . "', `value` = '" . $this->db->escape($option['value']) . "', `type` = '" . $this->db->escape($option['type']) . "'");
 				}
+				
+				foreach ($product['dropshipper_option'] as $dropshipper_option) {
+					// $this->session->data['do'] = $dropshipper_option;
+				$this->db->query("INSERT INTO " . DB_PREFIX . "dropshipper_order SET
+																																				order_id = '" . (int)$order_id . "',
+																																				order_product_id = '" . (int)$order_product_id . "',
+																																				shipping_firstname = '" . $dropshipper_option['name'] . "',
+																																				shipping_lastname = '" . $dropshipper_option['lastname'] . "',
+																																				shipping_email = '" . $dropshipper_option['email'] . "',
+																																				shipping_phone = '" . $dropshipper_option['phone'] . "',
+																																				shipping_address_1 = '" . $dropshipper_option['address'] . "',
+																																				shipping_country = '" . $dropshipper_option['country'] . "',
+																																				shipping_postcode = '" . $dropshipper_option['postcode'] . "'
+																																				");
+			}
 			}
 		}
 

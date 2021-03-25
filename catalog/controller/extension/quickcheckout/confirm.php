@@ -254,7 +254,8 @@ class ControllerExtensionQuickCheckoutConfirm extends Controller {
 						'phone'        => $dropshipper_option['phone'],
 						'country'      => $dropshipper_option['country'],
 						'postcode'     => $dropshipper_option['postcode'],
-						'address'      => $dropshipper_option['address']
+						'address'      => $dropshipper_option['address'],
+						'eutaxuser'      => $dropshipper_option['eutaxuser']
 					);
 				}
 

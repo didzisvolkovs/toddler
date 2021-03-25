@@ -70,32 +70,32 @@ class ControllerApiOrder extends Controller {
 			}
 
 			// Cart
-			if ((!$this->cart->hasProducts() && empty($this->session->data['vouchers'])) || (!$this->cart->hasStock() && !$this->config->get('config_stock_checkout'))) {
-				$json['error'] = $this->language->get('error_stock');
-			}
+			// if ((!$this->cart->hasProducts() && empty($this->session->data['vouchers'])) || (!$this->cart->hasStock() && !$this->config->get('config_stock_checkout'))) {
+			// 	$json['error'] = $this->language->get('error_stock');
+			// }
 
 			// Validate minimum quantity requirements.
-			$products = $this->cart->getProducts();
+			// $products = $this->cart->getProducts();
+			//
+			// foreach ($products as $product) {
+			// 	$product_total = 0;
+			//
+			// 	foreach ($products as $product_2) {
+			// 		if ($product_2['product_id'] == $product['product_id']) {
+			// 			$product_total += $product_2['quantity'];
+			// 		}
+			// 	}
 
-			foreach ($products as $product) {
-				$product_total = 0;
-
-				foreach ($products as $product_2) {
-					if ($product_2['product_id'] == $product['product_id']) {
-						$product_total += $product_2['quantity'];
-					}
-				}
-
-				if ($product['minimum'] > $product_total) {
-					$json['error'] = sprintf($this->language->get('error_minimum'), $product['name'], $product['minimum']);
-
-					break;
-				}
-			}
+				// if ($product['minimum'] > $product_total) {
+				// 	$json['error'] = sprintf($this->language->get('error_minimum'), $product['name'], $product['minimum']);
+				//
+				// 	break;
+				// }
+			// }
 
 			if (!$json) {
 				$json['success'] = $this->language->get('text_success');
-				
+
 				$order_data = array();
 
 				// Store Details
@@ -250,7 +250,7 @@ class ControllerApiOrder extends Controller {
 					'taxes'  => &$taxes,
 					'total'  => &$total
 				);
-			
+
 				$sort_order = array();
 
 				$results = $this->model_setting_extension->getExtensions('total');
@@ -264,7 +264,7 @@ class ControllerApiOrder extends Controller {
 				foreach ($results as $result) {
 					if ($this->config->get('total_' . $result['code'] . '_status')) {
 						$this->load->model('extension/total/' . $result['code']);
-						
+
 						// We have to put the totals in an array so that they pass by reference.
 						$this->{'model_extension_total_' . $result['code']}->getTotal($total_data);
 					}
@@ -350,7 +350,7 @@ class ControllerApiOrder extends Controller {
 				}
 
 				$this->model_checkout_order->addOrderHistory($json['order_id'], $order_status_id);
-				
+
 				// clear cart since the order has already been successfully stored.
 				$this->cart->clear();
 			}
@@ -407,7 +407,7 @@ class ControllerApiOrder extends Controller {
 				}
 
 				// Shipping
-				if ($this->cart->hasShipping()) {
+				if ($this->cart->hasShipping() and $this->cart->hasShippingdropshipper() ) {
 					// Shipping Address
 					if (!isset($this->session->data['shipping_address'])) {
 						$json['error'] = $this->language->get('error_shipping_address');
@@ -440,32 +440,32 @@ class ControllerApiOrder extends Controller {
 				}
 
 				// Cart
-				if ((!$this->cart->hasProducts() && empty($this->session->data['vouchers'])) || (!$this->cart->hasStock() && !$this->config->get('config_stock_checkout'))) {
-					$json['error'] = $this->language->get('error_stock');
-				}
+				// if ((!$this->cart->hasProducts() && empty($this->session->data['vouchers'])) || (!$this->cart->hasStock() && !$this->config->get('config_stock_checkout'))) {
+				// 	$json['error'] = $this->language->get('error_stock');
+				// }
 
 				// Validate minimum quantity requirements.
-				$products = $this->cart->getProducts();
+				// $products = $this->cart->getProducts();
+				//
+				// foreach ($products as $product) {
+				// 	$product_total = 0;
+				//
+				// 	foreach ($products as $product_2) {
+				// 		if ($product_2['product_id'] == $product['product_id']) {
+				// 			$product_total += $product_2['quantity'];
+				// 		}
+				// 	}
 
-				foreach ($products as $product) {
-					$product_total = 0;
-
-					foreach ($products as $product_2) {
-						if ($product_2['product_id'] == $product['product_id']) {
-							$product_total += $product_2['quantity'];
-						}
-					}
-
-					if ($product['minimum'] > $product_total) {
-						$json['error'] = sprintf($this->language->get('error_minimum'), $product['name'], $product['minimum']);
-
-						break;
-					}
-				}
+					// if ($product['minimum'] > $product_total) {
+					// 	$json['error'] = sprintf($this->language->get('error_minimum'), $product['name'], $product['minimum']);
+					//
+					// 	break;
+					// }
+				// }
 
 				if (!$json) {
 					$json['success'] = $this->language->get('text_success');
-					
+
 					$order_data = array();
 
 					// Store Details
@@ -511,7 +511,7 @@ class ControllerApiOrder extends Controller {
 					}
 
 					// Shipping Details
-					if ($this->cart->hasShipping()) {
+					if ($this->cart->hasShipping()  and $this->cart->hasShippingdropshipper()) {
 						$order_data['shipping_firstname'] = $this->session->data['shipping_address']['firstname'];
 						$order_data['shipping_lastname'] = $this->session->data['shipping_address']['lastname'];
 						$order_data['shipping_company'] = $this->session->data['shipping_address']['company'];
@@ -573,11 +573,27 @@ class ControllerApiOrder extends Controller {
 							);
 						}
 
+						$dropshipper_option_data = array();
+
+						foreach ($product['dropshipper_option'] as $dr_option) {
+							$dropshipper_option_data[] = array(
+								'name'      	 => $dr_option['name'],
+								'lastname' 		 => $dr_option['lastname'],
+								'email'        => $dr_option['email'],
+								'phone'        => $dr_option['phone'],
+								'country'      => $dr_option['country'],
+								'postcode'     => $dr_option['postcode'],
+								'address'      => $dr_option['address'],
+								'eutaxuser'      => $dr_option['eutaxuser']
+							);
+						}
+
 						$order_data['products'][] = array(
 							'product_id' => $product['product_id'],
 							'name'       => $product['name'],
 							'model'      => $product['model'],
 							'option'     => $option_data,
+							'dropshipper_option' => $dropshipper_option_data,
 							'download'   => $product['download'],
 							'quantity'   => $product['quantity'],
 							'subtract'   => $product['subtract'],
@@ -613,14 +629,14 @@ class ControllerApiOrder extends Controller {
 					$totals = array();
 					$taxes = $this->cart->getTaxes();
 					$total = 0;
-					
-					// Because __call can not keep var references so we put them into an array. 
+
+					// Because __call can not keep var references so we put them into an array.
 					$total_data = array(
 						'totals' => &$totals,
 						'taxes'  => &$taxes,
 						'total'  => &$total
 					);
-			
+
 					$sort_order = array();
 
 					$results = $this->model_setting_extension->getExtensions('total');
@@ -634,7 +650,7 @@ class ControllerApiOrder extends Controller {
 					foreach ($results as $result) {
 						if ($this->config->get('total_' . $result['code'] . '_status')) {
 							$this->load->model('extension/total/' . $result['code']);
-							
+
 							// We have to put the totals in an array so that they pass by reference.
 							$this->{'model_extension_total_' . $result['code']}->getTotal($total_data);
 						}
@@ -684,7 +700,7 @@ class ControllerApiOrder extends Controller {
 					} else {
 						$order_status_id = $this->config->get('config_order_status_id');
 					}
-					
+
 					$this->model_checkout_order->addOrderHistory($order_id, $order_status_id);
 				}
 			} else {
@@ -722,7 +738,7 @@ class ControllerApiOrder extends Controller {
 				$json['error'] = $this->language->get('error_not_found');
 			}
 		}
-		
+
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
 	}

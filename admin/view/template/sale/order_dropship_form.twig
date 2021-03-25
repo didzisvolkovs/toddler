@@ -22,8 +22,7 @@
             <li class="disabled active"><a href="#tab-customer" data-toggle="tab">1. {{ tab_customer }}</a></li>
             <li class="disabled"><a href="#tab-cart" data-toggle="tab">2. {{ tab_product }}</a></li>
             <li class="disabled"><a href="#tab-payment" data-toggle="tab">3. {{ tab_payment }}</a></li>
-            <li class="disabled"><a href="#tab-shipping" data-toggle="tab">4. {{ tab_shipping }}</a></li>
-            <li class="disabled"><a href="#tab-total" data-toggle="tab">5. {{ tab_total }}</a></li>
+            <li class="disabled"><a href="#tab-total" data-toggle="tab">4. {{ tab_total }}</a></li>
           </ul>
           <div class="tab-content">
             <div class="tab-pane active" id="tab-customer">
@@ -237,13 +236,19 @@
                     <tr>
                       <td class="text-left">{{ column_product }}</td>
                       <td class="text-left">{{ column_model }}</td>
+                      <td class="text-left">{{ column_shipping }}</td>
                       <td class="text-right">{{ column_quantity }}</td>
+
                       <td class="text-right">{{ column_price }}</td>
+                      <td class="text-right">{{ column_shipping }}</td>
+                      <td class="text-right">tax rate</td>
+                      <td class="text-right">tax</td>
                       <td class="text-right">{{ column_total }}</td>
                       <td>{{ column_action }}</td>
                     </tr>
                   </thead>
                   <tbody id="cart">
+
                     {% if order_products or order_vouchers %}
                     {% set product_row = 0 %}
                     {% for order_product in order_products %}
@@ -261,8 +266,23 @@
                         {% if option.type == 'text' or option.type == 'textarea' or option.type == 'file' or option.type == 'date' or option.type == 'datetime' or option.type == 'time' %}
                         <input type="hidden" name="product[{{ product_row }}][option][{{ option.product_option_id }}]" value="{{ option.value }}" />
                         {% endif %}
-                        {% endfor %}</td>
+                        {% endfor %}
+
+                      </td>
                       <td class="text-left">{{ order_product.model }}</td>
+                      <td>
+                      {% for dr_option in order_product.dropshipper_option %}
+
+                      <input type="hidden" name="product[{{ product_row }}][dropshipper_option][name]" value="{{ dr_option.shipping_firstname }}" />
+                      <input type="hidden" name="product[{{ product_row }}][dropshipper_option][lastname]" value="{{ dr_option.shipping_lastname }}" />
+                      <input type="hidden" name="product[{{ product_row }}][dropshipper_option][email]" value="{{ dr_option.shipping_email }}" />
+                      <input type="hidden" name="product[{{ product_row }}][dropshipper_option][phone]" value="{{ dr_option.shipping_phone }}" />
+                      <input type="hidden" name="product[{{ product_row }}][dropshipper_option][address]" value="{{ dr_option.shipping_address_1 }}" />
+                      <input type="hidden" name="product[{{ product_row }}][dropshipper_option][postcode]" value="{{ dr_option.shipping_postcode }}" />
+                      <input type="hidden" name="product[{{ product_row }}][dropshipper_option][country]" value="{{ dr_option.shipping_country }}" />
+                      <input type="hidden" name="product[{{ product_row }}][dropshipper_option][eutaxuser]" value="{{ dr_option.shipping_eutaxuser }}" />
+                      {% endfor %}
+                      </td>
                       <td class="text-right">{{ order_product.quantity }}
                         <input type="hidden" name="product[{{ product_row }}][quantity]" value="{{ order_product.quantity }}" /></td>
                       <td class="text-right"></td>
@@ -604,217 +624,7 @@
                 </div>
               </div>
             </div>
-            <div class="tab-pane" id="tab-shipping">
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="input-shipping-address">{{ entry_address }}</label>
-                <div class="col-sm-10">
-                  <select name="shipping_address" id="input-shipping-address" class="form-control">
-                    <option value="0" selected="selected">{{ text_none }}</option>
-                    {% for address in addresses %}
-                    <option value="{{ address.address_id }}">{{ address.firstname }} {{ address.lastname }}, {{ address.address_1 }}, {{ address.city }}, {{ address.country }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="form-group required">
-                <label class="col-sm-2 control-label" for="input-shipping-firstname">{{ entry_firstname }}</label>
-                <div class="col-sm-10">
-                  <input type="text" name="firstname" value="{{ shipping_firstname }}" id="input-shipping-firstname" class="form-control" />
-                </div>
-              </div>
-              <div class="form-group required">
-                <label class="col-sm-2 control-label" for="input-shipping-lastname">{{ entry_lastname }}</label>
-                <div class="col-sm-10">
-                  <input type="text" name="lastname" value="{{ shipping_lastname }}" id="input-shipping-lastname" class="form-control" />
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="input-shipping-company">{{ entry_company }}</label>
-                <div class="col-sm-10">
-                  <input type="text" name="company" value="{{ shipping_company }}" id="input-shipping-company" class="form-control" />
-                </div>
-              </div>
-              <div class="form-group required">
-                <label class="col-sm-2 control-label" for="input-shipping-address-1">{{ entry_address_1 }}</label>
-                <div class="col-sm-10">
-                  <input type="text" name="address_1" value="{{ shipping_address_1 }}" id="input-shipping-address-1" class="form-control" />
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="input-shipping-address-2">{{ entry_address_2 }}</label>
-                <div class="col-sm-10">
-                  <input type="text" name="address_2" value="{{ shipping_address_2 }}" id="input-shipping-address-2" class="form-control" />
-                </div>
-              </div>
-              <div class="form-group required">
-                <label class="col-sm-2 control-label" for="input-shipping-city">{{ entry_city }}</label>
-                <div class="col-sm-10">
-                  <input type="text" name="city" value="{{ shipping_city }}" id="input-shipping-city" class="form-control" />
-                </div>
-              </div>
-              <div class="form-group required">
-                <label class="col-sm-2 control-label" for="input-shipping-postcode">{{ entry_postcode }}</label>
-                <div class="col-sm-10">
-                  <input type="text" name="postcode" value="{{ shipping_postcode }}" id="input-shipping-postcode" class="form-control" />
-                </div>
-              </div>
-              <div class="form-group required">
-                <label class="col-sm-2 control-label" for="input-shipping-country">{{ entry_country }}</label>
-                <div class="col-sm-10">
-                  <select name="country_id" id="input-shipping-country" class="form-control">
-                    <option value="">{{ text_select }}</option>
-                    {% for country in countries %}
-                    {% if country.country_id == shipping_country_id %}
-                    <option value="{{ country.country_id }}" selected="selected">{{ country.name }}</option>
-                    {% else %}
-                    <option value="{{ country.country_id }}">{{ country.name }}</option>
-                    {% endif %}
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="form-group required">
-                <label class="col-sm-2 control-label" for="input-shipping-zone">{{ entry_zone }}</label>
-                <div class="col-sm-10">
-                  <select name="zone_id" id="input-shipping-zone" class="form-control">
-                  </select>
-                </div>
-              </div>
-              {% for custom_field in custom_fields %}
-              {% if custom_field.location == 'address' %}
-              {% if custom_field.type == 'select' %}
-              <div class="form-group custom-field custom-field{{ custom_field.custom_field_id }}" data-sort="{{ custom_field.sort_order + 3 }}">
-                <label class="col-sm-2 control-label" for="input-shipping-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
-                <div class="col-sm-10">
-                  <select name="custom_field[{{ custom_field.custom_field_id }}]" id="input-shipping-custom-field{{ custom_field.custom_field_id }}" class="form-control">
-                    <option value="">{{ text_select }}</option>
-                    {% for custom_field_value in custom_field.custom_field_value %}
-                    {% if shipping_custom_field[custom_field.custom_field_id] and custom_field_value.custom_field_value_id == shipping_custom_field[custom_field.custom_field_id] %}
-                    <option value="{{ custom_field_value.custom_field_value_id }}" selected="selected">{{ custom_field_value.name }}</option>
-                    {% else %}
-                    <option value="{{ custom_field_value.custom_field_value_id }}">{{ custom_field_value.name }}</option>
-                    {% endif %}
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              {% endif %}
-              {% if custom_field.type == 'radio' %}
-              <div class="form-group custom-field custom-field{{ custom_field.custom_field_id }}" data-sort="{{ custom_field.sort_order + 3 }}">
-                <label class="col-sm-2 control-label">{{ custom_field.name }}</label>
-                <div class="col-sm-10">
-                  <div id="input-shipping-custom-field{{ custom_field.custom_field_id }}">
-                    {% for custom_field_value in custom_field.custom_field_value %}
-                    <div class="radio">
-                      {% if shipping_custom_field[custom_field.custom_field_id] and custom_field_value.custom_field_value_id == shipping_custom_field[custom_field.custom_field_id] %}
-                      <label>
-                        <input type="radio" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ custom_field_value.custom_field_value_id }}" checked="checked" />
-                        {{ custom_field_value.name }}</label>
-                      {% else %}
-                      <label>
-                        <input type="radio" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ custom_field_value.custom_field_value_id }}" />
-                        {{ custom_field_value.name }}</label>
-                      {% endif %}
-                    </div>
-                    {% endfor %}
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-              {% if custom_field.type == 'checkbox' %}
-              <div class="form-group custom-field custom-field{{ custom_field.custom_field_id }}" data-sort="{{ custom_field.sort_order + 3 }}">
-                <label class="col-sm-2 control-label">{{ custom_field.name }}</label>
-                <div class="col-sm-10">
-                  <div id="input-shipping-custom-field{{ custom_field.custom_field_id }}">
-                    {% for custom_field_value in custom_field.custom_field_value %}
-                    <div class="checkbox">
-                      {% if shipping_custom_field[custom_field.custom_field_id] and custom_field_value.custom_field_value_id in shipping_custom_field[custom_field.custom_field_id] %}
-                      <label>
-                        <input type="checkbox" name="custom_field[{{ custom_field.custom_field_id }}][]" value="{{ custom_field_value.custom_field_value_id }}" checked="checked" />
-                        {{ custom_field_value.name }}</label>
-                      {% else %}
-                      <label>
-                        <input type="checkbox" name="custom_field[{{ custom_field.custom_field_id }}][]" value="{{ custom_field_value.custom_field_value_id }}" />
-                        {{ custom_field_value.name }}</label>
-                      {% endif %}
-                    </div>
-                    {% endfor %}
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-              {% if custom_field.type == 'text' %}
-              <div class="form-group custom-field custom-field{{ custom_field.custom_field_id }}" data-sort="{{ custom_field.sort_order + 3 }}">
-                <label class="col-sm-2 control-label" for="input-shipping-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
-                <div class="col-sm-10">
-                  <input type="text" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ shipping_custom_field[custom_field.custom_field_id] ? shipping_custom_field[custom_field.custom_field_id] ? custom_field.value }}" placeholder="{{ custom_field.name }}" id="input-shipping-custom-field{{ custom_field.custom_field_id }}" class="form-control" />
-                </div>
-              </div>
-              {% endif %}
-              {% if custom_field.type == 'textarea' %}
-              <div class="form-group custom-field custom-field{{ custom_field.custom_field_id }}" data-sort="{{ custom_field.sort_order + 3 }}">
-                <label class="col-sm-2 control-label" for="input-shipping-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
-                <div class="col-sm-10">
-                  <textarea name="custom_field[{{ custom_field.custom_field_id }}]" rows="5" placeholder="{{ custom_field.name }}" id="input-shipping-custom-field{{ custom_field.custom_field_id }}" class="form-control">{{ shipping_custom_field[custom_field.custom_field_id] ? shipping_custom_field[custom_field.custom_field_id] : custom_field.value }}</textarea>
-                </div>
-              </div>
-              {% endif %}
-              {% if custom_field.type == 'file' %}
-              <div class="form-group custom-field custom-field{{ custom_field.custom_field_id }}" data-sort="{{ custom_field.sort_order + 3 }}">
-                <label class="col-sm-2 control-label">{{ custom_field.name }}</label>
-                <div class="col-sm-10">
-                  <button type="button" id="button-shipping-custom-field{{ custom_field.custom_field_id }}" data-loading-text="{{ text_loading }}" class="btn btn-default"><i class="fa fa-upload"></i> {{ button_upload }}</button>
-                  <input type="hidden" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ shipping_custom_field[custom_field.custom_field_id] ? shipping_custom_field[custom_field.custom_field_id] }}" id="input-custom-field{{ custom_field.custom_field_id }}" />
-                </div>
-              </div>
-              {% endif %}
-              {% if custom_field.type == 'date' %}
-              <div class="form-group custom-field custom-field{{ custom_field.custom_field_id }}" data-sort="{{ custom_field.sort_order + 3 }}">
-                <label class="col-sm-2 control-label" for="input-shipping-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
-                <div class="col-sm-10">
-                  <div class="input-group date">
-                    <input type="text" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ shipping_custom_field[custom_field.custom_field_id] ? shipping_custom_field[custom_field.custom_field_id] : custom_field.value }}" placeholder="{{ custom_field.name }}" data-date-format="YYYY-MM-DD" id="input-shipping-custom-field{{ custom_field.custom_field_id }}" class="form-control" />
-                    <span class="input-group-btn">
-                    <button type="button" class="btn btn-default"><i class="fa fa-calendar"></i></button>
-                    </span></div>
-                </div>
-              </div>
-              {% endif %}
-              {% if custom_field.type == 'time' %}
-              <div class="form-group custom-field custom-field{{ custom_field.custom_field_id }}" data-sort="{{ custom_field.sort_order + 3 }}">
-                <label class="col-sm-2 control-label" for="input-shipping-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
-                <div class="col-sm-10">
-                  <div class="input-group time">
-                    <input type="text" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ shipping_custom_field[custom_field.custom_field_id] ? shipping_custom_field[custom_field.custom_field_id] : custom_field.value }}" placeholder="{{ custom_field.name }}" data-date-format="HH:mm" id="input-shipping-custom-field{{ custom_field.custom_field_id }}" class="form-control" />
-                    <span class="input-group-btn">
-                    <button type="button" class="btn btn-default"><i class="fa fa-calendar"></i></button>
-                    </span></div>
-                </div>
-              </div>
-              {% endif %}
-              {% if custom_field.type == 'datetime' %}
-              <div class="form-group custom-field custom-field{{ custom_field.custom_field_id }}" data-sort="{{ custom_field.sort_order + 3 }}">
-                <label class="col-sm-2 control-label" for="input-shipping-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
-                <div class="col-sm-10">
-                  <div class="input-group datetime">
-                    <input type="text" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ shipping_custom_field[custom_field.custom_field_id] ? shipping_custom_field[custom_field.custom_field_id] : custom_field.value }}" placeholder="{{ custom_field.name }}" data-date-format="YYYY-MM-DD HH:mm" id="input-shipping-custom-field{{ custom_field.custom_field_id }}" class="form-control" />
-                    <span class="input-group-btn">
-                    <button type="button" class="btn btn-default"><i class="fa fa-calendar"></i></button>
-                    </span></div>
-                </div>
-              </div>
-              {% endif %}
-              {% endif %}
-              {% endfor %}
-              <div class="row">
-                <div class="col-sm-6 text-left">
-                  <button type="button" onclick="$('a[href=\'#tab-payment\']').tab('show');" class="btn btn-default"><i class="fa fa-arrow-left"></i> {{ button_back }}</button>
-                </div>
-                <div class="col-sm-6 text-right">
-                  <button type="button" id="button-shipping-address" data-loading-text="{{ text_loading }}" class="btn btn-primary"><i class="fa fa-arrow-right"></i> {{ button_continue }}</button>
-                </div>
-              </div>
-            </div>
+
             <div class="tab-pane" id="tab-total">
               <div class="table-responsive">
                 <table class="table table-bordered">
@@ -822,35 +632,25 @@
                     <tr>
                       <td class="text-left">{{ column_product }}</td>
                       <td class="text-left">{{ column_model }}</td>
+                      <td class="text-left">{{ column_shipping }}</td>
                       <td class="text-right">{{ column_quantity }}</td>
                       <td class="text-right">{{ column_price }}</td>
+                      <td class="text-right">{{ column_shipping }}</td>
+                      <td class="text-right">tax rate</td>
+                      <td class="text-right">tax</td>
                       <td class="text-right">{{ column_total }}</td>
+
                     </tr>
                   </thead>
                   <tbody id="total">
                     <tr>
-                      <td class="text-center" colspan="5">{{ text_no_results }}</td>
+                      <td class="text-center" colspan="8">{{ text_no_results }}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <fieldset>
                 <legend>{{ text_order_detail }}</legend>
-                <div class="form-group required">
-                  <label class="col-sm-2 control-label" for="input-shipping-method">{{ entry_shipping_method }}</label>
-                  <div class="col-sm-10">
-                    <div class="input-group">
-                      <select name="shipping_method" id="input-shipping-method" class="form-control">
-                        <option value="">{{ text_select }}</option>
-                        {% if shipping_code %}
-                        <option value="{{ shipping_code }}" selected="selected">{{ shipping_method }}</option>
-                        {% endif %}
-                      </select>
-                      <span class="input-group-btn">
-                      <button type="button" id="button-shipping-method" data-loading-text="{{ text_loading }}" class="btn btn-primary">{{ button_apply }}</button>
-                      </span></div>
-                  </div>
-                </div>
                 <div class="form-group required">
                   <label class="col-sm-2 control-label" for="input-payment-method">{{ entry_payment_method }}</label>
                   <div class="col-sm-10">
@@ -866,36 +666,7 @@
                       </span></div>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label class="col-sm-2 control-label" for="input-coupon">{{ entry_coupon }}</label>
-                  <div class="col-sm-10">
-                    <div class="input-group">
-                      <input type="text" name="coupon" value="{{ coupon }}" id="input-coupon" class="form-control" />
-                      <span class="input-group-btn">
-                      <button type="button" id="button-coupon" data-loading-text="{{ text_loading }}" class="btn btn-primary">{{ button_apply }}</button>
-                      </span></div>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-sm-2 control-label" for="input-voucher">{{ entry_voucher }}</label>
-                  <div class="col-sm-10">
-                    <div class="input-group">
-                      <input type="text" name="voucher" value="{{ voucher }}" id="input-voucher" data-loading-text="{{ text_loading }}" class="form-control" />
-                      <span class="input-group-btn">
-                      <button type="button" id="button-voucher" data-loading-text="{{ text_loading }}" class="btn btn-primary">{{ button_apply }}</button>
-                      </span></div>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-sm-2 control-label" for="input-reward">{{ entry_reward }}</label>
-                  <div class="col-sm-10">
-                    <div class="input-group">
-                      <input type="text" name="reward" value="{{ reward }}" id="input-reward" data-loading-text="{{ text_loading }}" class="form-control" />
-                      <span class="input-group-btn">
-                      <button type="button" id="button-reward" data-loading-text="{{ text_loading }}" class="btn btn-primary">{{ button_apply }}</button>
-                      </span></div>
-                  </div>
-                </div>
+
                 <div class="form-group">
                   <label class="col-sm-2 control-label" for="input-order-status">{{ entry_order_status }}</label>
                   <div class="col-sm-10">
@@ -927,7 +698,7 @@
               </fieldset>
               <div class="row">
                 <div class="col-sm-6 text-left">
-                  <button type="button" onclick="$('select[name=\'shipping_method\']').prop('disabled') ? $('a[href=\'#tab-payment\']').tab('show') : $('a[href=\'#tab-shipping\']').tab('show');" class="btn btn-default"><i class="fa fa-arrow-left"></i> {{ button_back }}</button>
+                  <button type="button" onclick="$('a[href=\'#tab-payment\']').tab('show');" class="btn btn-default"><i class="fa fa-arrow-left"></i> {{ button_back }}</button>
                 </div>
                 <div class="col-sm-6 text-right">
                   <button type="button" id="button-refresh" data-toggle="tooltip" title="{{ button_refresh }}" data-loading-text="{{ text_loading }}" class="btn btn-warning"><i class="fa fa-refresh"></i></button>
@@ -1192,12 +963,13 @@ $('#tab-product input[name=\'product\']').autocomplete({
 			dataType: 'json',
 			success: function(json) {
 				response($.map(json, function(item) {
-          console.log(item);
+          // console.log(item['countries']);
 					return {
 						label: item['name'],
 						value: item['product_id'],
 						model: item['model'],
 						option: item['option'],
+						countries: item['countries'],
 						price: item['price']
 					}
 				}));
@@ -1363,57 +1135,70 @@ $('#tab-product input[name=\'product\']').autocomplete({
 				html += '<div class="form-group required">';
         html += '  <label class="col-sm-2 control-label">Name</label>';
         html += '  <div class="col-sm-10">';
-        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][name]" id="' + item['product_id'] + '-name-1" data-name="name" value="" placeholder="Name" />';
+        html +=     '<input type="text" name="name" id="name" data-name="name" value="" placeholder="Name" />';
         html +=   '</div>';
         html += '</div>';
 
         html += '<div class="form-group required">';
         html += '  <label class="col-sm-2 control-label">Last Name</label>';
         html += '  <div class="col-sm-10">';
-        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][surname]" id="' + item['product_id'] + '-surname-1" data-name="surname" value="" placeholder="surname" />';
+        html +=     '<input type="text" name="surname" id="surname" data-name="surname" value="" placeholder="surname" />';
         html +=   '</div>';
         html += '</div>';
 
         html += '<div class="form-group required">';
         html += '  <label class="col-sm-2 control-label">Email</label>';
         html += '  <div class="col-sm-10">';
-        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][email]" id="' + item['product_id'] + '-email-1" data-name="email" value="" placeholder="Email" />';
+        html +=     '<input type="text" name="email" id="email" data-name="email" value="" placeholder="Email" />';
         html +=   '</div>';
         html += '</div>';
 
         html += '<div class="form-group required">';
         html += '  <label class="col-sm-2 control-label">Phone</label>';
         html += '  <div class="col-sm-10">';
-        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][phone]" id="' + item['product_id'] + '-phone-1" data-name="phone" value="" placeholder="Phone" />';
+        html +=     '<input type="text" name="phone" id="phone" data-name="phone" value="" placeholder="Phone" />';
         html +=   '</div>';
         html += '</div>';
 
         html += '<div class="form-group required">';
-        html += '  <label class="col-sm-2 control-label">Country</label>';
+        html += '  <label class="col-sm-2 control-label" for="input-option-country">Country</label>';
         html += '  <div class="col-sm-10">';
-        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][country]" id="' + item['product_id'] + '-country-1" data-name="country" value="" placeholder="Country"/>';
-        html +=   '</div>';
+        html += '    <select name="country" id="country" class="form-control">';
+        html += '      <option value="">{{ text_select }}</option>';
+
+
+        for (j = 0; j < item['countries'].length; j++) {
+          option_value = item['countries'][j];
+
+          html += '<option value="' + option_value['country_id'] + '">' + option_value['name'];
+
+          html += '</option>';
+        }
+
+        html += '    </select>';
+        html += '  </div>';
         html += '</div>';
+
 
         html += '<div class="form-group required">';
         html += '  <label class="col-sm-2 control-label">Postcode</label>';
         html += '  <div class="col-sm-10">';
-        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][postcode]" id="' + item['product_id'] + '-postcode-1" data-name="postcode" value="" placeholder="Postcode" />';
+        html +=     '<input type="text" name="postcode" id="postcode" data-name="postcode" value="" placeholder="Postcode" />';
         html +=   '</div>';
         html += '</div>';
 
         html += '<div class="form-group required">';
         html += '  <label class="col-sm-2 control-label">Address</label>';
         html += '  <div class="col-sm-10">';
-        html +=     '<input type="text" name="data[' + item['product_id'] + '][1][address]" id="' + item['product_id'] + '-address-1" data-name="address" value="" Placeholder="Address" />';
+        html +=     '<input type="text" name="address" id="address" data-name="address" value="" Placeholder="Address" />';
         html +=   '</div>';
         html += '</div>';
 
         html += '<div class="form-group required">';
-        html += '  <label class="col-sm-2 control-label">Address</label>';
+        html += '  <label class="col-sm-2 control-label">EU Tax User</label>';
         html += '  <div class="col-sm-10">';
-        html +=     '<select name="data[' + item['product_id'] + '][1][eutaxuser]" id="' + item['product_id'] + '-eutaxuser-1" data-name="eutaxuser" class="form-control">';
-        html +=     '  <option value="" selected="selected">-- Select --</option>';
+        html +=     '<select name="eutaxuser" id="eutaxuser" data-name="eutaxuser" class="form-control">';
+        html +=     '  <option value="" selected="selected">{{ text_select }}</option>';
         html +=     '  <option value="0">No</option>';
         html +=     '  <option value="1">Yes</option>';
         html +=    '</select>';
@@ -1453,7 +1238,7 @@ $('#button-product-add').on('click', function() {
 	$.ajax({
 		url: '{{ catalog }}index.php?route=api/cart/add&api_token={{ api_token }}&store_id=' + $('select[name=\'store_id\'] option:selected').val(),
 		type: 'post',
-		data: $('#tab-product input[name=\'product_id\'], #tab-product input[name=\'quantity\'], #tab-product input[name^=\'option\'][type=\'text\'], #tab-product input[name^=\'option\'][type=\'hidden\'], #tab-product input[name^=\'option\'][type=\'radio\']:checked, #tab-product input[name^=\'option\'][type=\'checkbox\']:checked, #tab-product select[name^=\'option\'], #tab-product textarea[name^=\'option\']'),
+		data: $('#tab-product input[name=\'product_id\'], #tab-product input[name=\'name\'], #tab-product input[name=\'surname\'], #tab-product input[name=\'email\'], #tab-product input[name=\'phone\'], #tab-product input[name=\'address\'], #tab-product select[name=\'country\'], #tab-product input[name=\'postcode\'], #tab-product select[name=\'eutaxuser\'], #tab-product input[name=\'quantity\'], #tab-product input[name^=\'option\'][type=\'text\'], #tab-product input[name^=\'option\'][type=\'hidden\'], #tab-product input[name^=\'option\'][type=\'radio\']:checked, #tab-product input[name^=\'option\'][type=\'checkbox\']:checked, #tab-product select[name^=\'option\'], #tab-product textarea[name^=\'option\']'),
 		dataType: 'json',
 		crossDomain: true,
 		beforeSend: function() {
@@ -1795,11 +1580,9 @@ $('#button-payment-address').on('click', function() {
     				$('#button-refresh').trigger('click');
 
     				// If shipping required got to shipping tab else total tabs
-    				if ($('select[name=\'shipping_method\']').prop('disabled')) {
+
     					$('a[href=\'#tab-total\']').tab('show');
-    				} else {
-    					$('a[href=\'#tab-shipping\']').tab('show');
-    				}
+
                 });
 			}
 		},
@@ -1808,102 +1591,102 @@ $('#button-payment-address').on('click', function() {
 		}
 	});
 });
+//
+// // Shipping Address
+// $('select[name=\'shipping_address\']').on('change', function() {
+// 	$.ajax({
+// 		url: 'index.php?route=customer/customer/address&user_token={{ user_token }}&address_id=' + this.value,
+// 		dataType: 'json',
+// 		beforeSend: function() {
+// 			$('select[name=\'shipping_address\']').prop('disabled', true);
+// 		},
+// 		complete: function() {
+// 			$('select[name=\'shipping_address\']').prop('disabled', false);
+// 		},
+// 		success: function(json) {
+// 			// Reset all fields
+// 			$('#tab-shipping input[type=\'text\'], #tab-shipping input[type=\'text\'], #tab-shipping textarea').val('');
+// 			$('#tab-shipping select option').not('#tab-shipping select[name=\'shipping_address\']').removeAttr('selected');
+// 			$('#tab-shipping input[type=\'checkbox\'], #tab-shipping input[type=\'radio\']').removeAttr('checked');
+//
+// 			$('#tab-shipping input[name=\'firstname\']').val(json['firstname']);
+// 			$('#tab-shipping input[name=\'lastname\']').val(json['lastname']);
+// 			$('#tab-shipping input[name=\'company\']').val(json['company']);
+// 			$('#tab-shipping input[name=\'address_1\']').val(json['address_1']);
+// 			$('#tab-shipping input[name=\'address_2\']').val(json['address_2']);
+// 			$('#tab-shipping input[name=\'city\']').val(json['city']);
+// 			$('#tab-shipping input[name=\'postcode\']').val(json['postcode']);
+// 			$('#tab-shipping select[name=\'country_id\']').val(json['country_id']);
+//
+// 			shipping_zone_id = json['zone_id'];
+//
+// 			for (i in json['custom_field']) {
+// 				$('#tab-shipping select[name=\'custom_field[' + i + ']\']').val(json['custom_field'][i]);
+// 				$('#tab-shipping textarea[name=\'custom_field[' + i + ']\']').val(json['custom_field'][i]);
+// 				$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'text\']').val(json['custom_field'][i]);
+// 				$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'hidden\']').val(json['custom_field'][i]);
+// 				$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'radio\'][value=\'' + json['custom_field'][i] + '\']').prop('checked', true);
+// 				$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'checkbox\'][value=\'' + json['custom_field'][i] + '\']').prop('checked', true);
+//
+// 				if (json['custom_field'][i] instanceof Array) {
+// 					for (j = 0; j < json['custom_field'][i].length; j++) {
+// 						$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'checkbox\'][value=\'' + json['custom_field'][i][j] + '\']').prop('checked', true);
+// 					}
+// 				}
+// 			}
+//
+// 			$('#tab-shipping select[name=\'country_id\']').trigger('change');
+// 		},
+// 		error: function(xhr, ajaxOptions, thrownError) {
+// 			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+// 		}
+// 	});
+// });
 
-// Shipping Address
-$('select[name=\'shipping_address\']').on('change', function() {
-	$.ajax({
-		url: 'index.php?route=customer/customer/address&user_token={{ user_token }}&address_id=' + this.value,
-		dataType: 'json',
-		beforeSend: function() {
-			$('select[name=\'shipping_address\']').prop('disabled', true);
-		},
-		complete: function() {
-			$('select[name=\'shipping_address\']').prop('disabled', false);
-		},
-		success: function(json) {
-			// Reset all fields
-			$('#tab-shipping input[type=\'text\'], #tab-shipping input[type=\'text\'], #tab-shipping textarea').val('');
-			$('#tab-shipping select option').not('#tab-shipping select[name=\'shipping_address\']').removeAttr('selected');
-			$('#tab-shipping input[type=\'checkbox\'], #tab-shipping input[type=\'radio\']').removeAttr('checked');
-
-			$('#tab-shipping input[name=\'firstname\']').val(json['firstname']);
-			$('#tab-shipping input[name=\'lastname\']').val(json['lastname']);
-			$('#tab-shipping input[name=\'company\']').val(json['company']);
-			$('#tab-shipping input[name=\'address_1\']').val(json['address_1']);
-			$('#tab-shipping input[name=\'address_2\']').val(json['address_2']);
-			$('#tab-shipping input[name=\'city\']').val(json['city']);
-			$('#tab-shipping input[name=\'postcode\']').val(json['postcode']);
-			$('#tab-shipping select[name=\'country_id\']').val(json['country_id']);
-
-			shipping_zone_id = json['zone_id'];
-
-			for (i in json['custom_field']) {
-				$('#tab-shipping select[name=\'custom_field[' + i + ']\']').val(json['custom_field'][i]);
-				$('#tab-shipping textarea[name=\'custom_field[' + i + ']\']').val(json['custom_field'][i]);
-				$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'text\']').val(json['custom_field'][i]);
-				$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'hidden\']').val(json['custom_field'][i]);
-				$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'radio\'][value=\'' + json['custom_field'][i] + '\']').prop('checked', true);
-				$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'checkbox\'][value=\'' + json['custom_field'][i] + '\']').prop('checked', true);
-
-				if (json['custom_field'][i] instanceof Array) {
-					for (j = 0; j < json['custom_field'][i].length; j++) {
-						$('#tab-shipping input[name^=\'custom_field[' + i + ']\'][type=\'checkbox\'][value=\'' + json['custom_field'][i][j] + '\']').prop('checked', true);
-					}
-				}
-			}
-
-			$('#tab-shipping select[name=\'country_id\']').trigger('change');
-		},
-		error: function(xhr, ajaxOptions, thrownError) {
-			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
-		}
-	});
-});
-
-var shipping_zone_id = '{{ shipping_zone_id }}';
-
-$('#tab-shipping select[name=\'country_id\']').on('change', function() {
-	$.ajax({
-		url: 'index.php?route=localisation/country/country&user_token={{ user_token }}&country_id=' + this.value,
-		dataType: 'json',
-		beforeSend: function() {
-			$('#tab-shipping select[name=\'country_id\']').prop('disabled', true);
-		},
-		complete: function() {
-			$('#tab-shipping select[name=\'country_id\']').prop('disabled', false);
-		},
-		success: function(json) {
-			if (json['postcode_required'] == '1') {
-				$('#tab-shipping input[name=\'postcode\']').closest('.form-group').addClass('required');
-			} else {
-				$('#tab-shipping input[name=\'postcode\']').closest('.form-group').removeClass('required');
-			}
-
-			html = '<option value="">{{ text_select }}</option>';
-
-			if (json['zone'] && json['zone'] != '') {
-				for (i = 0; i < json['zone'].length; i++) {
-        			html += '<option value="' + json['zone'][i]['zone_id'] + '"';
-
-					if (json['zone'][i]['zone_id'] == shipping_zone_id) {
-	      				html += ' selected="selected"';
-	    			}
-
-	    			html += '>' + json['zone'][i]['name'] + '</option>';
-				}
-			} else {
-				html += '<option value="0" selected="selected">{{ text_none }}</option>';
-			}
-
-			$('#tab-shipping select[name=\'zone_id\']').html(html);
-		},
-		error: function(xhr, ajaxOptions, thrownError) {
-			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
-		}
-	});
-});
-
-$('#tab-shipping select[name=\'country_id\']').trigger('change');
+// var shipping_zone_id = '{{ shipping_zone_id }}';
+//
+// $('#tab-shipping select[name=\'country_id\']').on('change', function() {
+// 	$.ajax({
+// 		url: 'index.php?route=localisation/country/country&user_token={{ user_token }}&country_id=' + this.value,
+// 		dataType: 'json',
+// 		beforeSend: function() {
+// 			$('#tab-shipping select[name=\'country_id\']').prop('disabled', true);
+// 		},
+// 		complete: function() {
+// 			$('#tab-shipping select[name=\'country_id\']').prop('disabled', false);
+// 		},
+// 		success: function(json) {
+// 			if (json['postcode_required'] == '1') {
+// 				$('#tab-shipping input[name=\'postcode\']').closest('.form-group').addClass('required');
+// 			} else {
+// 				$('#tab-shipping input[name=\'postcode\']').closest('.form-group').removeClass('required');
+// 			}
+//
+// 			html = '<option value="">{{ text_select }}</option>';
+//
+// 			if (json['zone'] && json['zone'] != '') {
+// 				for (i = 0; i < json['zone'].length; i++) {
+//         			html += '<option value="' + json['zone'][i]['zone_id'] + '"';
+//
+// 					if (json['zone'][i]['zone_id'] == shipping_zone_id) {
+// 	      				html += ' selected="selected"';
+// 	    			}
+//
+// 	    			html += '>' + json['zone'][i]['name'] + '</option>';
+// 				}
+// 			} else {
+// 				html += '<option value="0" selected="selected">{{ text_none }}</option>';
+// 			}
+//
+// 			$('#tab-shipping select[name=\'zone_id\']').html(html);
+// 		},
+// 		error: function(xhr, ajaxOptions, thrownError) {
+// 			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+// 		}
+// 	});
+// });
+//
+// $('#tab-shipping select[name=\'country_id\']').trigger('change');
 
 $('#button-shipping-address').on('click', function() {
 	$.ajax({
@@ -2236,6 +2019,7 @@ $('#button-save').on('click', function() {
 			$('#button-save').button('reset');
 		},
 		success: function(json) {
+      console.log(url,'url');
 			$('.alert-dismissible, .text-danger').remove();
 
 			if (json['error']) {
@@ -2392,10 +2176,6 @@ $('#button-refresh').on('click', function() {
 					$('#content > .container-fluid').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> ' + json['error']['warning'] + ' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
 				}
 
-				if (json['error']['stock']) {
-					$('#content > .container-fluid').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> ' + json['error']['stock'] + '</div>');
-				}
-
 				if (json['error']['minimum']) {
 					for (i in json['error']['minimum']) {
 						$('#content > .container-fluid').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> ' + json['error']['minimum'][i] + ' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
@@ -2412,7 +2192,7 @@ $('#button-refresh').on('click', function() {
 					product = json['products'][i];
 
 					html += '<tr>';
-					html += '  <td class="text-left">' + product['name'] + ' ' + (!product['stock'] ? '<span class="text-danger">***</span>' : '') + '<br />';
+					html += '  <td class="text-left">' + product['name'] + '<br />';
 					html += '  <input type="hidden" name="product[' + i + '][product_id]" value="' + product['product_id'] + '" />';
 
 					if (product['option']) {
@@ -2437,9 +2217,35 @@ $('#button-refresh').on('click', function() {
 
 					html += '</td>';
 					html += '  <td class="text-left">' + product['model'] + '</td>';
-					html += '  <td class="text-right"><div class="input-group btn-block" style="max-width: 200px;"><input type="text" name="product[' + i + '][quantity]" value="' + product['quantity'] + '" class="form-control" /><span class="input-group-btn"><button type="button" data-toggle="tooltip" title="{{ button_refresh }}" data-loading-text="{{ text_loading }}" class="btn btn-primary"><i class="fa fa-refresh"></i></button></span></div></td>';
-                    html += '  <td class="text-right">' + product['price'] + '</td>';
-					html += '  <td class="text-right">' + product['total'] + '</td>';
+					html += '  <td class="text-left">';
+					html += '  <table>';
+
+          if (product['dropshipper_option']) {
+            // for (j = 0; j < product['dropshipper_option'].length; j++) {
+            //   option = product['dropshipper_option'][j];
+
+              html += '<tr><td>{{ text_shipping_name }}: </td><td>' + product['dropshipper_option']['name'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_last_name }}: </td><td>' +  product['dropshipper_option']['lastname'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_email }}: </td><td>' +  product['dropshipper_option']['email'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_phone }}: </td><td>' +  product['dropshipper_option']['phone'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_country }}: </td><td>' +  product['dropshipper_option']['country'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_postcode }}: </td><td>' +  product['dropshipper_option']['postcode'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_address }}: </td><td>' +  product['dropshipper_option']['address'] + '</td></tr>';
+              if( product['dropshipper_option']['eutaxuser'] == 1){
+                html += '<tr><td colspan="2">{{ text_eutaxuser }} </td><td></td></tr>';
+              }
+            // }
+          }
+
+          html += '</table>';
+          html += '</td>';
+
+					html += '  <td class="text-right">' + product['quantity'] + '</td>';
+          html += '  <td class="text-right">' + product['price'] + '</td>';
+          html += '  <td class="text-left">' + product['shipping'] + '</td>';
+          html += '  <td class="text-left">' + product['tax_rate'] + '</td>';
+          html += '  <td class="text-left">' + product['tax'] + '</td>';
+      		html += '  <td class="text-right">' + product['total'] + '</td>';
 					html += '  <td class="text-center" style="width: 3px;"><button type="button" value="' + product['cart_id'] + '" data-toggle="tooltip" title="{{ button_remove }}" data-loading-text="{{ text_loading }}" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
 					html += '</tr>';
 
@@ -2499,7 +2305,7 @@ $('#button-refresh').on('click', function() {
 					product = json['products'][i];
 
 					html += '<tr>';
-					html += '  <td class="text-left">' + product['name'] + ' ' + (!product['stock'] ? '<span class="text-danger">***</span>' : '') + '<br />';
+					html += '  <td class="text-left">' + product['name'] + '<br />';
 
 					if (product['option']) {
 						for (j = 0; j < product['option'].length; j++) {
@@ -2511,8 +2317,33 @@ $('#button-refresh').on('click', function() {
 
 					html += '  </td>';
 					html += '  <td class="text-left">' + product['model'] + '</td>';
+					html += '  <td class="text-left">';
+          html += '  <table>';
+
+          if (product['dropshipper_option']) {
+            // for (j = 0; j < product['dropshipper_option'].length; j++) {
+            //   option = product['dropshipper_option'][j];
+
+              html += '<tr><td>{{ text_shipping_name }}: </td><td>' + product['dropshipper_option']['name'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_last_name }}: </td><td>' +  product['dropshipper_option']['lastname'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_email }}: </td><td>' +  product['dropshipper_option']['email'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_phone }}: </td><td>' +  product['dropshipper_option']['phone'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_country }}: </td><td>' +  product['dropshipper_option']['country'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_postcode }}: </td><td>' +  product['dropshipper_option']['postcode'] + '</td></tr>';
+              html += '<tr><td>{{ text_shipping_address }}: </td><td>' +  product['dropshipper_option']['address'] + '</td></tr>';
+              if( product['dropshipper_option']['eutaxuser'] == 1){
+                html += '<tr><td colspan="2">{{ text_eutaxuser }} </td><td></td></tr>';
+              }
+            // }
+          }
+
+          html += '</table>';
+          html += '</td>';
 					html += '  <td class="text-right">' + product['quantity'] + '</td>';
 					html += '  <td class="text-right">' + product['price'] + '</td>';
+          html += '  <td class="text-left">' + product['shipping'] + '</td>';
+          html += '  <td class="text-left">' + product['tax_rate'] + '</td>';
+          html += '  <td class="text-left">' + product['tax'] + '</td>';
 					html += '  <td class="text-right">' + product['total'] + '</td>';
 					html += '</tr>';
 				}
@@ -2537,7 +2368,7 @@ $('#button-refresh').on('click', function() {
 					total = json['totals'][i];
 
 					html += '<tr>';
-					html += '  <td class="text-right" colspan="4">' + total['title'] + ':</td>';
+					html += '  <td class="text-right" colspan="8">' + total['title'] + ':</td>';
 					html += '  <td class="text-right">' + total['text'] + '</td>';
 					html += '</tr>';
 				}

@@ -253,6 +253,8 @@ class ControllerSaleOrder extends Controller {
 
 		$results = $this->model_sale_order->getOrders($filter_data);
 
+
+
 		foreach ($results as $result) {
 			$data['orders'][] = array(
 				'order_id'      => $result['order_id'],
@@ -269,11 +271,11 @@ class ControllerSaleOrder extends Controller {
 
 		$data['user_token'] = $this->session->data['user_token'];
 
-		if (isset($this->error['warning'])) {
-			$data['error_warning'] = $this->error['warning'];
-		} else {
-			$data['error_warning'] = '';
-		}
+		// if (isset($this->error['warning'])) {
+		// 	$data['error_warning'] = $this->error['warning'];
+		// } else {
+		// 	$data['error_warning'] = '';
+		// }
 
 		if (isset($this->session->data['success'])) {
 			$data['success'] = $this->session->data['success'];
@@ -545,18 +547,26 @@ class ControllerSaleOrder extends Controller {
 			$products = $this->model_sale_order->getOrderProducts($this->request->get['order_id']);
 
 			foreach ($products as $product) {
+				$dropshipper_option = $this->model_sale_order->getOrderDropshipperOptions($this->request->get['order_id'], $product['order_product_id']);
+
 				$data['order_products'][] = array(
 					'product_id' => $product['product_id'],
 					'name'       => $product['name'],
 					'model'      => $product['model'],
 					'option'     => $this->model_sale_order->getOrderOptions($this->request->get['order_id'], $product['order_product_id']),
+					'dropshipper_option'     => $dropshipper_option,
 					'quantity'   => $product['quantity'],
 					'price'      => $product['price'],
 					'total'      => $product['total'],
 					'reward'     => $product['reward']
 				);
+			if($dropshipper_option){
+				$dropshipper = true;
 			}
-
+			else{
+				$dropshipper = false;
+			}
+			}
 
 			// Vouchers
 			$data['order_vouchers'] = $this->model_sale_order->getOrderVouchers($this->request->get['order_id']);
@@ -735,8 +745,15 @@ class ControllerSaleOrder extends Controller {
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
 
-		// $this->response->setOutput($this->load->view('sale/order_form', $data));
-		$this->response->setOutput($this->load->view('sale/order_dropship_form', $data));
+		if($dropshipper == true){
+			$this->response->setOutput($this->load->view('sale/order_dropship_form', $data));
+		}
+		else{
+			$this->response->setOutput($this->load->view('sale/order_form', $data));
+		}
+
+
+
 	}
 
 	public function updategifts() {
