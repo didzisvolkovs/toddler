@@ -123,6 +123,12 @@ class ControllerSaleOrder extends Controller {
 			$filter_customer = '';
 		}
 
+		if (isset($this->request->get['filter_dropshipper'])) {
+			$filter_dropshipper = $this->request->get['filter_dropshipper'];
+		} else {
+			$filter_dropshipper = '';
+		}
+
 		if (isset($this->request->get['filter_order_status'])) {
 			$filter_order_status = $this->request->get['filter_order_status'];
 		} else {
@@ -181,6 +187,10 @@ class ControllerSaleOrder extends Controller {
 			$url .= '&filter_customer=' . urlencode(html_entity_decode($this->request->get['filter_customer'], ENT_QUOTES, 'UTF-8'));
 		}
 
+		if (isset($this->request->get['filter_dropshipper'])) {
+			$url .= '&filter_dropshipper=' . $this->request->get['filter_dropshipper'];
+		}
+
 		if (isset($this->request->get['filter_order_status'])) {
 			$url .= '&filter_order_status=' . $this->request->get['filter_order_status'];
 		}
@@ -237,6 +247,7 @@ class ControllerSaleOrder extends Controller {
 		$filter_data = array(
 			'filter_order_id'        => $filter_order_id,
 			'filter_customer'	     => $filter_customer,
+			'filter_dropshipper'    => $filter_dropshipper,
 			'filter_order_status'    => $filter_order_status,
 			'filter_order_status_id' => $filter_order_status_id,
 			'filter_total'           => $filter_total,
@@ -260,6 +271,7 @@ class ControllerSaleOrder extends Controller {
 			$data['orders'][] = array(
 				'order_id'      => $result['order_id'],
 				'customer'      => $result['customer'],
+				'dropshipper'      => $result['dropshipper'],
 				'order_status'  => $result['order_status'] ? $result['order_status'] : $this->language->get('text_missing'),
 				'total'         => $this->currency->format($result['total'], $result['currency_code'], $result['currency_value']),
 				'date_added'    => date($this->language->get('date_format_short'), strtotime($result['date_added'])),
@@ -334,6 +346,7 @@ class ControllerSaleOrder extends Controller {
 
 		$data['sort_order'] = $this->url->link('sale/order', 'user_token=' . $this->session->data['user_token'] . '&sort=o.order_id' . $url, true);
 		$data['sort_customer'] = $this->url->link('sale/order', 'user_token=' . $this->session->data['user_token'] . '&sort=customer' . $url, true);
+		$data['sort_dropshipper'] = $this->url->link('sale/order', 'user_token=' . $this->session->data['user_token'] . '&sort=dropshipper' . $url, true);
 		$data['sort_status'] = $this->url->link('sale/order', 'user_token=' . $this->session->data['user_token'] . '&sort=order_status' . $url, true);
 		$data['sort_total'] = $this->url->link('sale/order', 'user_token=' . $this->session->data['user_token'] . '&sort=o.total' . $url, true);
 		$data['sort_date_added'] = $this->url->link('sale/order', 'user_token=' . $this->session->data['user_token'] . '&sort=o.date_added' . $url, true);
