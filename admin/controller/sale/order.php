@@ -256,6 +256,7 @@ class ControllerSaleOrder extends Controller {
 
 
 		foreach ($results as $result) {
+
 			$data['orders'][] = array(
 				'order_id'      => $result['order_id'],
 				'customer'      => $result['customer'],
@@ -271,11 +272,11 @@ class ControllerSaleOrder extends Controller {
 
 		$data['user_token'] = $this->session->data['user_token'];
 
-		// if (isset($this->error['warning'])) {
-		// 	$data['error_warning'] = $this->error['warning'];
-		// } else {
-		// 	$data['error_warning'] = '';
-		// }
+		if (isset($this->error['warning'])) {
+			$data['error_warning'] = $this->error['warning'];
+		} else {
+			$data['error_warning'] = '';
+		}
 
 		if (isset($this->session->data['success'])) {
 			$data['success'] = $this->session->data['success'];

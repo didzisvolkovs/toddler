@@ -168,11 +168,11 @@ class Cart {
 
 				$dropshipper_option = (json_decode($cart['dropshipper_option'], true));
 
+
+
 				if(!empty($dropshipper_option)){
 				 // var_dump($tests);
 				// foreach (json_decode($cart['dropshipper_option']) as $value) {
-				// 	 var_dump($value);
-				// 	die();
 				 	  $dropshipper_option_data[] = array(
 							'name'      	 => $dropshipper_option['name'],
 							'lastname' 		 => $dropshipper_option['lastname'],

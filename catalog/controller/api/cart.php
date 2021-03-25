@@ -70,6 +70,15 @@ class ControllerApiCart extends Controller {
 
 						 // var_dump($this->request->post);
 
+						 if(isset($this->request->post['name']) or
+						 		isset($this->request->post['surname']) or
+								isset($this->request->post['email']) or
+								isset($this->request->post['phone']) or
+								isset($this->request->post['country']) or
+								isset($this->request->post['postcode']) or
+								isset($this->request->post['address']) or
+								isset($this->request->post['eutaxuser']))
+								{
 						$dropshipper_option = array(
 							'name' => $this->request->post['name'],
 							'lastname' => $this->request->post['surname'],
@@ -80,6 +89,10 @@ class ControllerApiCart extends Controller {
 							'address' => $this->request->post['address'],
 							'eutaxuser' => $this->request->post['eutaxuser'],
 						);
+					}
+					else{
+						$dropshipper_option = '';
+					}
 
 						$this->cart->add($this->request->post['product_id'], $quantity, $option,'', $dropshipper_option);
 
@@ -169,6 +182,7 @@ class ControllerApiCart extends Controller {
 
 			$products = $this->cart->getProducts();
 
+
 			foreach ($products as $product) {
 				$product_total = 0;
 
@@ -248,13 +262,11 @@ class ControllerApiCart extends Controller {
 					);
 				}
 
-// var_dump($product['dropshipper_option']);
-
+  // var_dump($product['dropshipper_option']);
+	// die();
 				$dropshipper_option_data = array();
-				if($product['dropshipper_option']){
+				if(!empty($product['dropshipper_option'])){
 					$data['dropshipper'] = 1;
-
-
 					foreach ($product['dropshipper_option'] as $dr_option) {
 						$this->load->model('localisation/country');
 

@@ -658,6 +658,7 @@ class ControllerApiOrder extends Controller {
 
 					$sort_order = array();
 
+
 					foreach ($total_data['totals'] as $key => $value) {
 						$sort_order[$key] = $value['sort_order'];
 					}
@@ -666,10 +667,20 @@ class ControllerApiOrder extends Controller {
 
 					$order_data = array_merge($order_data, $total_data);
 
+					// var_dump($order_data);
+					// die();
+
 					if (isset($this->request->post['comment'])) {
 						$order_data['comment'] = $this->request->post['comment'];
 					} else {
 						$order_data['comment'] = '';
+					}
+
+					foreach ($total_data['totals'] as $key => $value) {
+						$sort_order[$key] = $value['sort_order'];
+						if($value['code'] == 'total'){
+							$order_data['total'] = $value['value'] ;
+						}
 					}
 
 					if (isset($this->request->post['affiliate_id'])) {
@@ -691,6 +702,8 @@ class ControllerApiOrder extends Controller {
 						$order_data['affiliate_id'] = 0;
 						$order_data['commission'] = 0;
 					}
+
+
 
 					$this->model_checkout_order->editOrder($order_id, $order_data);
 
