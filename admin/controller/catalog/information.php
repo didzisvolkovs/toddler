@@ -292,6 +292,82 @@ class ControllerCatalogInformation extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
+		// Categories
+		$this->load->model('catalog/infocategory');
+
+		if (isset($this->request->post['information_category'])) {
+			$categories = $this->request->post['information_category'];
+		} elseif (isset($this->request->get['information_id'])) {
+			$categories = $this->model_catalog_information->getInformationCategories($this->request->get['information_id']);
+		} else {
+			$categories = array();
+		}
+		$data['information_categories'] = array();
+
+		foreach ($categories as $category_id) {
+			$category_info = $this->model_catalog_infocategory->getCategory($category_id);
+
+			if ($category_info) {
+				$data['information_categories'][] = array(
+					'category_id' => $category_info['category_id'],
+					'name'        => ($category_info['path']) ? $category_info['path'] . ' &gt; ' . $category_info['name'] : $category_info['name']
+				);
+			}
+		}
+//beidzas kategorijas
+
+
+// Image
+if (isset($this->request->post['image'])) {
+	$data['image'] = $this->request->post['image'];
+} elseif (!empty($information_info)) {
+	$data['image'] = $information_info['image'];
+} else {
+	$data['image'] = '';
+}
+
+$this->load->model('tool/image');
+
+if (isset($this->request->post['image']) && is_file(DIR_IMAGE . $this->request->post['image'])) {
+	$data['thumb'] = $this->model_tool_image->resize($this->request->post['image'], 100, 100);
+} elseif (!empty($information_info) && is_file(DIR_IMAGE . $information_info['image'])) {
+	$data['thumb'] = $this->model_tool_image->resize($information_info['image'], 100, 100);
+} else {
+	$data['thumb'] = $this->model_tool_image->resize('no_image.png', 100, 100);
+}
+
+$data['placeholder'] = $this->model_tool_image->resize('no_image.png', 100, 100);
+
+
+// Images
+if (isset($this->request->post['information_image'])) {
+	$information_images = $this->request->post['information_image'];
+} elseif (isset($this->request->get['information_id'])) {
+	$information_images = $this->model_catalog_information->getInformationImages($this->request->get['information_id']);
+} else {
+	$information_images = array();
+}
+
+$data['information_images'] = array();
+foreach ($information_images as $information_image) {
+
+	if (is_file(DIR_IMAGE . $information_image['image'])) {
+		$image = $information_image['image'];
+		$thumb = $information_image['image'];
+	} else {
+		$image = '';
+		$thumb = 'no_image.png';
+	}
+
+		$data['information_images'][] = array(
+		'image'      => $image,
+		'thumb'      => $this->model_tool_image->resize($thumb, 100, 100),
+		'sort_order' => $information_image['sort_order']
+	);
+}
+
+///end images
+
 		$data['breadcrumbs'] = array();
 
 		$data['breadcrumbs'][] = array(
@@ -364,14 +440,6 @@ class ControllerCatalogInformation extends Controller {
 			$data['bottom'] = 0;
 		}
 
-		if (isset($this->request->post['top'])) {
-			$data['top'] = $this->request->post['top'];
-		} elseif (!empty($information_info)) {
-			$data['top'] = $information_info['top'];
-		} else {
-			$data['top'] = 0;
-		}
-
 		if (isset($this->request->post['status'])) {
 			$data['status'] = $this->request->post['status'];
 		} elseif (!empty($information_info)) {
@@ -414,6 +482,7 @@ class ControllerCatalogInformation extends Controller {
 
 		$this->response->setOutput($this->load->view('catalog/information_form', $data));
 	}
+
 
 	protected function validateForm() {
 		if (!$this->user->hasPermission('modify', 'catalog/information')) {

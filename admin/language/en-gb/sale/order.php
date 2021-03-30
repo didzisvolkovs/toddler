@@ -92,7 +92,7 @@ $_['column_reference']           = 'Reference';
 $_['column_action']              = 'Action';
 $_['column_weight']              = 'Product Weight';
 $_['column_shipping']            = 'Shipping';
-$_['column_dropshipper']         = 'Dropshipper';
+$_['column_dropshipper']         = 'Client Group';
 
 // Entry
 $_['entry_store']                = 'Store';

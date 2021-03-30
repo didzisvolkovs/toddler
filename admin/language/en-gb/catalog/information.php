@@ -24,14 +24,12 @@ $_['entry_meta_description'] = 'Meta Tag Description';
 $_['entry_store']            = 'Stores';
 $_['entry_keyword']          = 'Keyword';
 $_['entry_bottom']           = 'Bottom';
-$_['entry_top']              = 'Top';
 $_['entry_status']           = 'Status';
 $_['entry_sort_order']       = 'Sort Order';
 $_['entry_layout']           = 'Layout Override';
-
+$_['entry_category']         = 'Info Categories';
 // Help
 $_['help_bottom']            = 'Display in the bottom footer.';
-$_['help_top']            = 'Display in the top footer.';
 
 // Error
 $_['error_warning']          = 'Warning: Please check the form carefully for errors!';

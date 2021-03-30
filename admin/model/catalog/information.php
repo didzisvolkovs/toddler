@@ -1,9 +1,13 @@
 <?php
 class ModelCatalogInformation extends Model {
 	public function addInformation($data) {
-		$this->db->query("INSERT INTO " . DB_PREFIX . "information SET sort_order = '" . (int)$data['sort_order'] . "', bottom = '" . (isset($data['bottom']) ? (int)$data['bottom'] : 0) . "', top = '" . (isset($data['top']) ? (int)$data['top'] : 0) . "', status = '" . (int)$data['status'] . "'");
+		$this->db->query("INSERT INTO " . DB_PREFIX . "information SET sort_order = '" . (int)$data['sort_order'] . "', bottom = '" . (isset($data['bottom']) ? (int)$data['bottom'] : 0) . "', status = '" . (int)$data['status'] . "'");
 
 		$information_id = $this->db->getLastId();
+
+
+//$data['information_infocategory'] = $this->getinformationCategories($inf);
+
 
 		foreach ($data['information_description'] as $language_id => $value) {
 			$this->db->query("INSERT INTO " . DB_PREFIX . "information_description SET information_id = '" . (int)$information_id . "', language_id = '" . (int)$language_id . "', title = '" . $this->db->escape($value['title']) . "', description = '" . $this->db->escape($value['description']) . "', meta_title = '" . $this->db->escape($value['meta_title']) . "', meta_description = '" . $this->db->escape($value['meta_description']) . "', meta_keyword = '" . $this->db->escape($value['meta_keyword']) . "'");
@@ -15,6 +19,18 @@ class ModelCatalogInformation extends Model {
 			}
 		}
 
+//insert information_category
+		if (isset($data['information_category'])) {
+			foreach ($data['information_category'] as $category_id) {
+				$this->db->query("INSERT INTO " . DB_PREFIX . "information_to_infocategory SET information_id = '" . (int)$information_id . "', category_id = '" . (int)$category_id . "'");
+			}
+		}
+//insert images
+		if (isset($data['information_image'])) {
+			foreach ($data['information_image'] as $information_image) {
+				$this->db->query("INSERT INTO " . DB_PREFIX . "information_image SET information_id = '" . (int)$information_id . "', image = '" . $this->db->escape($information_image['image']) . "', sort_order = '" . (int)$information_image['sort_order'] . "'");
+			}
+		}
 		// SEO URL
 		if (isset($data['information_seo_url'])) {
 			foreach ($data['information_seo_url'] as $store_id => $language) {
@@ -38,7 +54,7 @@ class ModelCatalogInformation extends Model {
 	}
 
 	public function editInformation($information_id, $data) {
-		$this->db->query("UPDATE " . DB_PREFIX . "information SET sort_order = '" . (int)$data['sort_order'] . "', bottom = '" . (isset($data['bottom']) ? (int)$data['bottom'] : 0) . "', top = '" . (isset($data['top']) ? (int)$data['top'] : 0) . "', status = '" . (int)$data['status'] . "' WHERE information_id = '" . (int)$information_id . "'");
+		$this->db->query("UPDATE " . DB_PREFIX . "information SET sort_order = '" . (int)$data['sort_order'] . "', bottom = '" . (isset($data['bottom']) ? (int)$data['bottom'] : 0) . "', status = '" . (int)$data['status'] . "' WHERE information_id = '" . (int)$information_id . "'");
 
 		$this->db->query("DELETE FROM " . DB_PREFIX . "information_description WHERE information_id = '" . (int)$information_id . "'");
 
@@ -54,6 +70,14 @@ class ModelCatalogInformation extends Model {
 			}
 		}
 
+		$this->db->query("DELETE FROM " . DB_PREFIX . "information_image WHERE information_id = '" . (int)$information_id . "'");
+
+		if (isset($data['information_image'])) {
+			foreach ($data['information_image'] as $information_image) {
+				$this->db->query("INSERT INTO " . DB_PREFIX . "information_image SET information_id = '" . (int)$information_id . "', image = '" . $this->db->escape($information_image['image']) . "', sort_order = '" . (int)$information_image['sort_order'] . "'");
+			}
+		}
+
 		$this->db->query("DELETE FROM " . DB_PREFIX . "seo_url WHERE query = 'information_id=" . (int)$information_id . "'");
 
 		if (isset($data['information_seo_url'])) {
@@ -63,6 +87,15 @@ class ModelCatalogInformation extends Model {
 						$this->db->query("INSERT INTO `" . DB_PREFIX . "seo_url` SET store_id = '" . (int)$store_id . "', language_id = '" . (int)$language_id . "', query = 'information_id=" . (int)$information_id . "', keyword = '" . $this->db->escape($keyword) . "'");
 					}
 				}
+			}
+		}
+
+		//$this->db->query("DELETE FROM " . DB_PREFIX . "information_to_infocategory WHERE information_id = '" . (int)$information_id . "'");
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "information_to_infocategory` WHERE information_id = '" . (int)$information_id . "'");
+
+		if (isset($data['information_category'])) {
+			foreach ($data['information_category'] as $category_id) {
+				$this->db->query("INSERT INTO " . DB_PREFIX . "information_to_infocategory SET information_id = '" . (int)$information_id . "', category_id = '" . (int)$category_id . "'");
 			}
 		}
 
@@ -82,6 +115,8 @@ class ModelCatalogInformation extends Model {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "information_description` WHERE information_id = '" . (int)$information_id . "'");
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "information_to_store` WHERE information_id = '" . (int)$information_id . "'");
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "information_to_layout` WHERE information_id = '" . (int)$information_id . "'");
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "information_to_infocategory` WHERE information_id = '" . (int)$information_id . "'");
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "information_image` WHERE information_id = '" . (int)$information_id . "'");
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "seo_url` WHERE query = 'information_id=" . (int)$information_id . "'");
 
 		$this->cache->delete('information');
@@ -162,6 +197,17 @@ class ModelCatalogInformation extends Model {
 		return $information_description_data;
 	}
 
+	public function getInformationCategories($information_id) {
+		$information_category_data = array();
+
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "information_to_infocategory WHERE information_id = '" . (int)$information_id . "'");
+
+		foreach ($query->rows as $result) {
+			$information_category_data[] = $result['category_id'];
+		}
+		return $information_category_data;
+	}
+
 	public function getInformationStores($information_id) {
 		$information_store_data = array();
 
@@ -186,6 +232,7 @@ class ModelCatalogInformation extends Model {
 		return $information_seo_url_data;
 	}
 
+
 	public function getInformationLayouts($information_id) {
 		$information_layout_data = array();
 
@@ -202,6 +249,12 @@ class ModelCatalogInformation extends Model {
 		$query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "information");
 
 		return $query->row['total'];
+	}
+
+	public function getInformationImages($information_id) {
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "information_image WHERE information_id = '" . (int)$information_id . "' ORDER BY sort_order ASC");
+
+		return $query->rows;
 	}
 
 	public function getTotalInformationsByLayoutId($layout_id) {
